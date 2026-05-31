@@ -12,7 +12,7 @@ export default async function Home() {
   if (session?.user) redirect("/dashboard");
 
   return (
-    <div className="bg-white">
+    <main className="min-h-screen flex flex-col bg-white animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
       <LandingNav />
       <main>
         <LandingHero />
@@ -21,6 +21,6 @@ export default async function Home() {
         <LandingPricing />
       </main>
       <LandingFooter />
-    </div>
+    </main>
   );
 }
