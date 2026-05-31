@@ -1,8 +1,10 @@
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/db";
 import { verifyPassword } from "@/lib/auth/password";
+import { ensurePersonalWorkspace } from "@/lib/workspace";
 import { z } from "zod";
 
 const credSchema = z.object({
@@ -15,6 +17,11 @@ export const authConfig: NextAuthConfig = {
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      allowDangerousEmailAccountLinking: true,
+    }),
     Credentials({
       credentials: {
         email: { label: "Email", type: "email" },
@@ -32,6 +39,11 @@ export const authConfig: NextAuthConfig = {
       },
     }),
   ],
+  events: {
+    async createUser({ user }) {
+      if (user.id) await ensurePersonalWorkspace(user.id, user.name);
+    },
+  },
   callbacks: {
     jwt({ token, user }) {
       if (user) token.id = user.id;

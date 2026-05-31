@@ -31,6 +31,14 @@ export default function LoginPage() {
           <CardTitle>Entrar</CardTitle>
         </CardHeader>
         <CardContent>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full mb-4"
+            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+          >
+            Entrar com Google
+          </Button>
           <form onSubmit={submit} className="space-y-4">
             <div>
               <Label htmlFor="email">Email</Label>
