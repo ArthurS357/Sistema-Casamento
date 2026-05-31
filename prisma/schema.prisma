@@ -17,7 +17,8 @@ model User {
   email       String       @unique
   password    String?
   image       String?
-  role        String       @default("couple") // papel global do produto
+  role        String       @default("couple")   // papel global do produto
+  systemRole  String       @default("user")    // user | admin (acesso ao painel de sistema)
   memberships Membership[]
   accounts    Account[]
   sessions    Session[]
