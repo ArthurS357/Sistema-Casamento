@@ -1,3 +1,5 @@
+"use client";
+
 import { ClipboardX, FileSpreadsheet, PhoneCall, Layers } from "lucide-react";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { cn } from "@/lib/utils";
