@@ -12,7 +12,17 @@ export default async function WeddingLayout({
   const { id } = await params;
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
-  const w = await prisma.wedding.findUnique({ where: { id }, select: { userId: true } });
-  if (!w || w.userId !== session.user.id) redirect("/dashboard");
+  const w = await prisma.wedding.findUnique({
+    where: { id },
+    select: { workspaceId: true },
+  });
+  if (!w) redirect("/dashboard");
+  const member = await prisma.membership.findUnique({
+    where: {
+      userId_workspaceId: { userId: session.user.id, workspaceId: w.workspaceId },
+    },
+    select: { id: true },
+  });
+  if (!member) redirect("/dashboard");
   return <>{children}</>;
 }

@@ -1,5 +1,5 @@
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -7,19 +7,22 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// ─── Identidade ────────────────────────────────────────────────
+// User = pessoa. Plano/assinatura NÃO mora mais no User: mora no
+// Workspace (tenant). Um User acessa N workspaces via Membership.
+
 model User {
-  id        String   @id @default(cuid())
-  name      String?
-  email     String   @unique
-  password  String?
-  image     String?
-  role      String   @default("couple")
-  plan      String   @default("free")
-  weddings  Wedding[]
-  accounts  Account[]
-  sessions  Session[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String       @id @default(cuid())
+  name        String?
+  email       String       @unique
+  password    String?
+  image       String?
+  role        String       @default("couple") // papel global do produto
+  memberships Membership[]
+  accounts    Account[]
+  sessions    Session[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
 
 model Account {
@@ -35,7 +38,8 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([provider, providerAccountId])
 }
 
@@ -51,41 +55,75 @@ model VerificationToken {
   identifier String
   token      String   @unique
   expires    DateTime
+
   @@unique([identifier, token])
 }
 
+// ─── Tenant (Multi-tenant B2B) ─────────────────────────────────
+// Workspace é a unidade de isolamento e de cobrança. Toda Wedding
+// pertence a um Workspace; o acesso é concedido via Membership.
+
+model Workspace {
+  id          String       @id @default(cuid())
+  name        String
+  slug        String       @unique
+  plan        String       @default("free") // free | premium (flag de monetização)
+  memberships Membership[]
+  weddings    Wedding[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Membership {
+  id          String    @id @default(cuid())
+  role        String    @default("owner") // owner | admin | member
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([userId, workspaceId])
+  @@index([workspaceId])
+  @@index([userId])
+}
+
+// ─── Domínio ───────────────────────────────────────────────────
+
 model Wedding {
-  id             String   @id @default(cuid())
+  id             String              @id @default(cuid())
   title          String
   date           DateTime
-  budgetTotal    Int      @default(0)
-  userId         String
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  budgetTotal    Int                 @default(0)
+  workspaceId    String
+  workspace      Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   guests         Guest[]
   tables         Table[]
   expenses       Expense[]
   guestRelations GuestRelationship[]
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  @@index([userId])
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([workspaceId])
 }
 
 model Guest {
-  id                  String   @id @default(cuid())
+  id                  String              @id @default(cuid())
   name                String
   email               String?
   phone               String?
-  rsvpStatus          String   @default("pending")
+  rsvpStatus          String              @default("pending")
   dietaryRestrictions String?
   notes               String?
   weddingId           String
-  wedding             Wedding  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
-  seatId              String?  @unique
-  seat                Seat?    @relation("GuestSeat", fields: [seatId], references: [id])
+  wedding             Wedding             @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  seatId              String?             @unique
+  seat                Seat?               @relation("GuestSeat", fields: [seatId], references: [id])
   relationshipsFrom   GuestRelationship[] @relation("FromGuest")
   relationshipsTo     GuestRelationship[] @relation("ToGuest")
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
   @@index([weddingId])
 }
 
@@ -99,6 +137,7 @@ model Table {
   seats     Seat[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   @@index([weddingId])
 }
 
@@ -110,21 +149,23 @@ model Seat {
   guest     Guest?   @relation("GuestSeat")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   @@unique([tableId, number])
   @@index([tableId])
 }
 
 model Expense {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   category    String
   description String?
   amount      Int
-  paid        Int      @default(0)
+  paid        Int       @default(0)
   dueDate     DateTime?
   weddingId   String
-  wedding     Wedding  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  wedding     Wedding   @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
   @@index([weddingId])
 }
 
@@ -139,6 +180,7 @@ model GuestRelationship {
   wedding   Wedding  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   @@unique([guestId, relatedId, type])
   @@index([weddingId])
   @@index([guestId])

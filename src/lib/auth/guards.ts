@@ -14,22 +14,44 @@ export async function requireUserId(): Promise<string> {
   return id;
 }
 
+/**
+ * Autorização multi-tenant: o usuário só acessa a wedding se for
+ * membro do workspace (tenant) dono dela. Não há mais dono único.
+ */
 export async function assertWeddingAccess(
   weddingId: string,
   userId: string,
 ): Promise<void> {
   const w = await prisma.wedding.findUnique({
     where: { id: weddingId },
-    select: { userId: true },
+    select: { workspaceId: true },
   });
   if (!w) throw new AuthError(404, "Wedding not found");
-  if (w.userId !== userId) throw new AuthError(403, "Forbidden");
+  const member = await prisma.membership.findUnique({
+    where: { userId_workspaceId: { userId, workspaceId: w.workspaceId } },
+    select: { id: true },
+  });
+  if (!member) throw new AuthError(403, "Forbidden");
 }
 
 export async function requireWeddingAccess(weddingId: string): Promise<string> {
   const userId = await requireUserId();
   await assertWeddingAccess(weddingId, userId);
   return userId;
+}
+
+/**
+ * Resolve o workspace ativo do usuário (o mais antigo = o pessoal,
+ * criado no registro). Ponto único para futura troca de tenant ativo.
+ */
+export async function getActiveWorkspaceId(userId: string): Promise<string> {
+  const m = await prisma.membership.findFirst({
+    where: { userId },
+    orderBy: { createdAt: "asc" },
+    select: { workspaceId: true },
+  });
+  if (!m) throw new AuthError(403, "No workspace");
+  return m.workspaceId;
 }
 
 export function errorResponse(e: unknown): Response {
