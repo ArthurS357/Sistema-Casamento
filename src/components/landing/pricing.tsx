@@ -3,6 +3,7 @@ import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Plan } from "@/lib/plans";
+import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 
 interface PlanCard {
   id: Plan;
@@ -70,9 +71,12 @@ const plans: PlanCard[] = [
 ];
 
 export function LandingPricing() {
+  const { ref, isVisible } = useScrollReveal<HTMLDivElement>();
+  const animClass = isVisible ? "animate-in fade-in slide-in-from-bottom-4 fill-mode-both duration-700 ease-out" : "opacity-0 translate-y-4";
+
   return (
     <section id="planos" className="bg-slate-50 py-24">
-      <div className="mx-auto max-w-6xl px-6">
+      <div ref={ref} className="mx-auto max-w-6xl px-6">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-semibold uppercase tracking-widest text-gold-600">
             Planos
@@ -92,7 +96,8 @@ export function LandingPricing() {
               key={plan.id}
               style={{ animationDelay: `${i * 100}ms` }}
               className={cn(
-                "animate-in fade-in slide-in-from-bottom-4 fill-mode-both duration-700 ease-out relative flex flex-col rounded-3xl border bg-white p-8 shadow-sm transition-all hover:scale-[1.02] hover:ring-2 hover:ring-offset-2 hover:ring-gold-300 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-gold-400 cursor-pointer",
+                animClass,
+                "relative flex flex-col rounded-3xl border bg-white p-8 shadow-sm transition-all hover:scale-[1.02] hover:ring-2 hover:ring-offset-2 hover:ring-gold-300 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-gold-400 cursor-pointer",
                 plan.featured
                   ? "border-gold-300 ring-1 ring-gold-200 md:-translate-y-2"
                   : "border-slate-200",

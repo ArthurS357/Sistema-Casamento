@@ -1,4 +1,6 @@
 import { ClipboardX, FileSpreadsheet, PhoneCall, Layers } from "lucide-react";
+import { useScrollReveal } from "@/hooks/use-scroll-reveal";
+import { cn } from "@/lib/utils";
 
 const pains = [
   {
@@ -24,9 +26,12 @@ const pains = [
 ];
 
 export function LandingPainPoints() {
+  const { ref, isVisible } = useScrollReveal<HTMLDivElement>();
+  const animClass = isVisible ? "animate-in fade-in slide-in-from-bottom-6 duration-700 ease-out fill-mode-both" : "opacity-0 translate-y-6";
+
   return (
     <section id="dores" className="bg-slate-50 py-24">
-      <div className="mx-auto max-w-6xl px-6">
+      <div ref={ref} className="mx-auto max-w-6xl px-6">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-semibold uppercase tracking-widest text-gold-600">
             Por que tanto estresse?
@@ -43,7 +48,7 @@ export function LandingPainPoints() {
           {pains.map((pain, i) => (
             <article
               key={pain.title}
-              className="animate-in fade-in slide-in-from-bottom-6 duration-700 ease-out fill-mode-both rounded-2xl border border-slate-200 bg-white p-7 shadow-sm"
+              className={cn(animClass, "rounded-2xl border border-slate-200 bg-white p-7 shadow-sm")}
               style={{ animationDelay: `${i * 80}ms` }}
             >
               <div className="grid h-11 w-11 place-items-center rounded-xl bg-rose-50 text-rose-500">

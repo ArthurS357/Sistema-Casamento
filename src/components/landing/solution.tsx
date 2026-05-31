@@ -1,4 +1,6 @@
 import { Users, MailCheck, Wallet, LayoutGrid, BarChart3, ShieldCheck } from "lucide-react";
+import { useScrollReveal } from "@/hooks/use-scroll-reveal";
+import { cn } from "@/lib/utils";
 
 const features = [
   {
@@ -34,9 +36,12 @@ const features = [
 ];
 
 export function LandingSolution() {
+  const { ref, isVisible } = useScrollReveal<HTMLDivElement>();
+  const animClass = isVisible ? "animate-in fade-in slide-in-from-bottom-6 duration-700 ease-out fill-mode-both" : "opacity-0 translate-y-6";
+
   return (
     <section id="solucao" className="py-24">
-      <div className="mx-auto max-w-6xl px-6">
+      <div ref={ref} className="mx-auto max-w-6xl px-6">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-semibold uppercase tracking-widest text-gold-600">
             Tudo em um só lugar
@@ -54,7 +59,7 @@ export function LandingSolution() {
           {features.map((f, i) => (
             <article
               key={f.title}
-              className="animate-in fade-in slide-in-from-bottom-6 duration-700 ease-out fill-mode-both group rounded-2xl border border-slate-200 bg-white p-7 shadow-sm transition-shadow hover:shadow-md"
+              className={cn(animClass, "group rounded-2xl border border-slate-200 bg-white p-7 shadow-sm transition-shadow hover:shadow-md")}
               style={{ animationDelay: `${(i % 3) * 80}ms` }}
             >
               <div className="grid h-11 w-11 place-items-center rounded-xl bg-gold-50 text-gold-600 transition-colors group-hover:bg-gold-100">
