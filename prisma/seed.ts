@@ -32,29 +32,28 @@ async function main() {
   await prisma.account.deleteMany();
   await prisma.user.deleteMany();
 
-  console.log("👤 Criando usuário Admin...");
+  // ── Admin ─────────────────────────────────────────────────────────
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
 
-  const adminEmail = process.env.ADMIN_EMAIL ?? "admin@sistema.dev";
-  const adminPw = await hash("Admin123!");
-
-  const admin = await prisma.user.create({
-    data: {
-      name: "Admin",
-      email: adminEmail,
-      password: adminPw,
-      systemRole: "admin",
-    },
-  });
-
-  // Admin also gets a workspace so the app invariant holds
-  const adminWs = await prisma.workspace.create({
-    data: { name: "Admin Workspace", slug: slug("admin-workspace", "sys") },
-  });
-  await prisma.membership.create({
-    data: { userId: admin.id, workspaceId: adminWs.id, role: "owner" },
-  });
-
-  console.log(`   ✔ ${adminEmail} / Admin123!`);
+  if (!adminEmail || !adminPassword) {
+    console.warn(
+      "⚠️  ADMIN_EMAIL ou ADMIN_PASSWORD não definidos no .env — conta admin não criada.",
+    );
+  } else {
+    console.log("👤 Criando usuário Admin...");
+    const adminPw = await hash(adminPassword);
+    const admin = await prisma.user.create({
+      data: { name: "Admin", email: adminEmail, password: adminPw, systemRole: "admin" },
+    });
+    const adminWs = await prisma.workspace.create({
+      data: { name: "Admin Workspace", slug: slug("admin-workspace", "sys") },
+    });
+    await prisma.membership.create({
+      data: { userId: admin.id, workspaceId: adminWs.id, role: "owner" },
+    });
+    console.log(`   ✔ Admin → ${adminEmail} (senha via ADMIN_PASSWORD)`);
+  }
 
   // ── Planos de teste ────────────────────────────────────────────────
   const seeds = [
@@ -129,7 +128,7 @@ async function main() {
   }
 
   console.log("\n✅ Seed concluído.");
-  console.log("   Admin  →", adminEmail, "/ Admin123!");
+  if (adminEmail) console.log(`   Admin  → ${adminEmail} (senha via ADMIN_PASSWORD)`);
   console.log("   Free   → free@teste.dev / Test123!");
   console.log("   Pro    → pro@teste.dev / Test123!");
   console.log("   Gestor → gestor@teste.dev / Test123!");
