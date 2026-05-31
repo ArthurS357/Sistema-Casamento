@@ -59,6 +59,12 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+model ProcessedStripeEvent {
+  id        String   @id
+  type      String
+  createdAt DateTime @default(now())
+}
+
 // ─── Tenant (Multi-tenant B2B) ─────────────────────────────────
 // Workspace é a unidade de isolamento e de cobrança. Toda Wedding
 // pertence a um Workspace; o acesso é concedido via Membership.

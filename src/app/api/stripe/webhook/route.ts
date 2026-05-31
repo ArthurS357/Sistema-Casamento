@@ -15,33 +15,48 @@ export async function POST(req: Request) {
     return new Response("Invalid signature", { status: 400 });
   }
 
-  switch (event.type) {
-    case "checkout.session.completed": {
-      const s = event.data.object as Stripe.Checkout.Session;
-      const workspaceId = s.metadata?.workspaceId;
-      if (workspaceId) {
-        await prisma.workspace.update({
-          where: { id: workspaceId },
-          data: {
-            plan: "premium",
-            stripeCustomerId: typeof s.customer === "string" ? s.customer : undefined,
-            stripeSubscriptionId:
-              typeof s.subscription === "string" ? s.subscription : undefined,
-          },
-        });
+  try {
+    await prisma.processedStripeEvent.create({
+      data: { id: event.id, type: event.type },
+    });
+  } catch {
+    return Response.json({ received: true, duplicate: true });
+  }
+
+  try {
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const s = event.data.object as Stripe.Checkout.Session;
+        const workspaceId = s.metadata?.workspaceId;
+        if (workspaceId) {
+          await prisma.workspace.update({
+            where: { id: workspaceId },
+            data: {
+              plan: "premium",
+              stripeCustomerId: typeof s.customer === "string" ? s.customer : undefined,
+              stripeSubscriptionId:
+                typeof s.subscription === "string" ? s.subscription : undefined,
+            },
+          });
+        }
+        break;
       }
-      break;
+      case "customer.subscription.updated":
+      case "customer.subscription.deleted": {
+        const sub = event.data.object as Stripe.Subscription;
+        const active = sub.status === "active" || sub.status === "trialing";
+        await prisma.workspace.updateMany({
+          where: { stripeSubscriptionId: sub.id },
+          data: { plan: active ? "premium" : "free" },
+        });
+        break;
+      }
     }
-    case "customer.subscription.updated":
-    case "customer.subscription.deleted": {
-      const sub = event.data.object as Stripe.Subscription;
-      const active = sub.status === "active" || sub.status === "trialing";
-      await prisma.workspace.updateMany({
-        where: { stripeSubscriptionId: sub.id },
-        data: { plan: active ? "premium" : "free" },
-      });
-      break;
-    }
+  } catch {
+    await prisma.processedStripeEvent
+      .delete({ where: { id: event.id } })
+      .catch(() => {});
+    return new Response("Handler error", { status: 500 });
   }
 
   return Response.json({ received: true });
