@@ -147,8 +147,24 @@ export default function GuestsPage({ params }: { params: Promise<{ id: string }>
                 </td>
               </tr>
             ))}
-            {guests && filtered.length === 0 && (
-              <tr><td colSpan={5} className="p-6 text-center text-slate-500">Nenhum convidado.</td></tr>
+            {guests && guests.length === 0 && (
+              <tr>
+                <td colSpan={5} className="py-12 px-4 text-center">
+                  <div className="max-w-xs mx-auto space-y-3 animate-in fade-in slide-in-from-bottom-2">
+                    <div className="mx-auto w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                      <span className="text-xl text-slate-400">👋</span>
+                    </div>
+                    <h3 className="font-medium text-slate-900">Sua lista está vazia</h3>
+                    <p className="text-sm text-slate-500">Adicione convidados para começar a planejar os assentos e o RSVP.</p>
+                    <Button variant="outline" className="mt-4 w-full" onClick={() => { setEditing(null); setOpen(true); }}>
+                      Adicionar convidado
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            )}
+            {guests && guests.length > 0 && filtered.length === 0 && (
+              <tr><td colSpan={5} className="p-6 text-center text-slate-500">Nenhum convidado encontrado na busca.</td></tr>
             )}
           </tbody>
         </table>

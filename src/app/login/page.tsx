@@ -52,13 +52,17 @@ export default function LoginPage() {
           <form onSubmit={submit} className="space-y-4">
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 fill-mode-both" style={{ animationDelay: "200ms" }}>
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} aria-invalid={!!err} />
             </div>
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 fill-mode-both" style={{ animationDelay: "300ms" }}>
               <Label htmlFor="password">Senha</Label>
-              <Input id="password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
+              <Input id="password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} aria-invalid={!!err} />
             </div>
-            {err && <p className="text-sm text-red-600" role="alert">{err}</p>}
+            {err && (
+              <div className="p-3 rounded-md bg-red-50 border border-red-200 text-sm text-red-600 animate-in fade-in slide-in-from-top-2" role="alert">
+                {err}
+              </div>
+            )}
             <Button type="submit" variant="gold" className="w-full animate-in fade-in slide-in-from-bottom-2 duration-500 fill-mode-both" style={{ animationDelay: "400ms" }} disabled={loading}>
               {loading ? "Entrando…" : "Entrar"}
             </Button>

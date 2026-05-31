@@ -20,6 +20,7 @@ export default function RsvpPage({ params }: { params: Promise<{ token: string }
   const [dietary, setDietary] = useState("");
   const [sending, setSending] = useState<"confirmed" | "declined" | null>(null);
   const [done, setDone] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/rsvp/${token}`)
@@ -34,6 +35,7 @@ export default function RsvpPage({ params }: { params: Promise<{ token: string }
 
   async function answer(rsvpStatus: "confirmed" | "declined") {
     setSending(rsvpStatus);
+    setErr(null);
     try {
       const res = await fetch(`/api/rsvp/${token}`, {
         method: "PATCH",
@@ -44,6 +46,9 @@ export default function RsvpPage({ params }: { params: Promise<{ token: string }
         }),
       });
       if (res.ok) setDone(rsvpStatus);
+      else setErr("Não foi possível enviar sua resposta. Tente novamente.");
+    } catch {
+      setErr("Erro de conexão. Verifique sua internet.");
     } finally {
       setSending(null);
     }
@@ -100,6 +105,12 @@ export default function RsvpPage({ params }: { params: Promise<{ token: string }
               <Label htmlFor="diet">Restrições alimentares (opcional)</Label>
               <Input id="diet" value={dietary} onChange={(e) => setDietary(e.target.value)} placeholder="Ex.: vegetariano" />
             </div>
+
+            {err && (
+              <div className="p-3 rounded-md bg-red-50 border border-red-200 text-sm text-red-600 animate-in fade-in slide-in-from-top-2 text-left" role="alert">
+                {err}
+              </div>
+            )}
 
             <div className="grid grid-cols-1 gap-3">
               <Button
