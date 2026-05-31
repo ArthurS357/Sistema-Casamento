@@ -92,7 +92,7 @@ export function LandingPricing() {
               key={plan.id}
               style={{ animationDelay: `${i * 100}ms` }}
               className={cn(
-                "animate-in fade-in slide-in-from-bottom-4 fill-mode-both duration-700 ease-out relative flex flex-col rounded-3xl border bg-white p-8 shadow-sm",
+                "animate-in fade-in slide-in-from-bottom-4 fill-mode-both duration-700 ease-out relative flex flex-col rounded-3xl border bg-white p-8 shadow-sm transition-all hover:scale-[1.02] hover:ring-2 hover:ring-offset-2 hover:ring-gold-300 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-gold-400 cursor-pointer",
                 plan.featured
                   ? "border-gold-300 ring-1 ring-gold-200 md:-translate-y-2"
                   : "border-slate-200",

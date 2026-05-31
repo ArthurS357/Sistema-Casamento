@@ -26,7 +26,7 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen flex items-center justify-center px-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
         <CardHeader>
           <CardTitle>Entrar</CardTitle>
         </CardHeader>
@@ -34,25 +34,26 @@ export default function LoginPage() {
           <Button
             type="button"
             variant="outline"
-            className="w-full mb-4"
+            className="w-full mb-4 animate-in fade-in slide-in-from-bottom-2 duration-500 fill-mode-both"
+            style={{ animationDelay: "100ms" }}
             onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
           >
             Entrar com Google
           </Button>
           <form onSubmit={submit} className="space-y-4">
-            <div>
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 fill-mode-both" style={{ animationDelay: "200ms" }}>
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
-            <div>
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 fill-mode-both" style={{ animationDelay: "300ms" }}>
               <Label htmlFor="password">Senha</Label>
               <Input id="password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
             {err && <p className="text-sm text-red-600" role="alert">{err}</p>}
-            <Button type="submit" variant="gold" className="w-full" disabled={loading}>
+            <Button type="submit" variant="gold" className="w-full animate-in fade-in slide-in-from-bottom-2 duration-500 fill-mode-both" style={{ animationDelay: "400ms" }} disabled={loading}>
               {loading ? "Entrando…" : "Entrar"}
             </Button>
-            <p className="text-sm text-slate-500 text-center">
+            <p className="text-sm text-slate-500 text-center animate-in fade-in duration-500 fill-mode-both" style={{ animationDelay: "500ms" }}>
               Sem conta? <Link href="/register" className="text-gold-500 hover:underline">Cadastre-se</Link>
             </p>
           </form>
