@@ -2,8 +2,10 @@ import Stripe from "stripe";
 import type { PaidPlan } from "@/lib/plans";
 import { PAID_PLANS } from "@/lib/plans";
 
+// `||` (não `??`) para tratar string vazia no .env como ausente:
+// o SDK da Stripe lança no construtor se a key for "" (build/page-data).
 export const stripe = new Stripe(
-  process.env.STRIPE_SECRET_KEY ?? "sk_test_placeholder",
+  process.env.STRIPE_SECRET_KEY || "sk_test_placeholder",
   { apiVersion: "2026-05-27.dahlia" },
 );
 
