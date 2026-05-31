@@ -4,6 +4,7 @@ import { RegisterSchema } from "@/lib/validation/schemas";
 import { errorResponse } from "@/lib/auth/guards";
 import { ensurePersonalWorkspace } from "@/lib/workspace";
 import { authLimiter, enforceRateLimit } from "@/lib/rate-limit";
+import { sendWelcomeEmail } from "@/lib/mail";
 
 export async function POST(req: Request) {
   try {
@@ -19,6 +20,8 @@ export async function POST(req: Request) {
       select: { id: true, email: true, name: true },
     });
     await ensurePersonalWorkspace(user.id, data.name);
+    // Onboarding: disparo gracioso (nunca quebra o registro).
+    await sendWelcomeEmail({ to: user.email, name: data.name });
     return Response.json(user, { status: 201 });
   } catch (e) {
     return errorResponse(e);
