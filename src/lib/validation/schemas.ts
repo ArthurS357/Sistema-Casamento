@@ -60,6 +60,11 @@ export const SeatCreateSchema = z.object({
   number: z.number().int().min(1).max(50),
 });
 
+export const RsvpPublicSchema = z.object({
+  rsvpStatus: z.enum(["confirmed", "declined", "maybe"]),
+  dietaryRestrictions: z.string().trim().max(500).optional().or(z.literal("").transform(() => undefined)),
+});
+
 export const RelationshipCreateSchema = z
   .object({
     type: RelType,

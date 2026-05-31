@@ -18,3 +18,11 @@
     *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   }
 }
+
+@layer components {
+  .skeleton {
+    @apply rounded-md animate-shimmer;
+    background-image: linear-gradient(90deg, rgb(241 245 249) 25%, rgb(226 232 240) 37%, rgb(241 245 249) 63%);
+    background-size: 200% 100%;
+  }
+}

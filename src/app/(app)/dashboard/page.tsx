@@ -6,6 +6,7 @@ import { Plus, CalendarDays, Wallet, Users } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Input, Label } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { formatBRL, toCents } from "@/lib/money";
@@ -71,7 +72,17 @@ export default function DashboardPage() {
         </Dialog>
       </header>
 
-      {isLoading && <p className="text-slate-500">Carregando…</p>}
+      {isLoading && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i}><CardContent className="space-y-3">
+              <Skeleton className="h-6 w-2/3" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-4 w-1/3" />
+            </CardContent></Card>
+          ))}
+        </div>
+      )}
 
       {!isLoading && data && data.length === 0 && (
         <Card><CardContent className="text-center py-12 text-slate-500">
@@ -82,7 +93,7 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {data?.map((w) => (
           <Link key={w.id} href={`/weddings/${w.id}`}>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <Card className="hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer animate-fade-up">
               <CardContent className="space-y-3">
                 <h2 className="font-display text-xl text-slate-900">{w.title}</h2>
                 <div className="flex items-center gap-2 text-sm text-slate-500">

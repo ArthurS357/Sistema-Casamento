@@ -115,6 +115,7 @@ model Guest {
   email               String?
   phone               String?
   rsvpStatus          String              @default("pending")
+  rsvpToken           String              @unique @default(cuid())
   dietaryRestrictions String?
   notes               String?
   weddingId           String

@@ -1,11 +1,12 @@
 "use client";
 import { use, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, Edit, Link2 } from "lucide-react";
+import { Plus, Trash2, Edit, Link2, Share2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input, Select, Label, Textarea } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { RsvpStatus, RelType } from "@/lib/validation/enums";
 
@@ -15,6 +16,7 @@ interface Guest {
   email: string | null;
   phone: string | null;
   rsvpStatus: string;
+  rsvpToken: string;
   dietaryRestrictions: string | null;
   notes: string | null;
   seat?: { id: string; number: number; table: { name: string } } | null;
@@ -68,6 +70,10 @@ export default function GuestsPage({ params }: { params: Promise<{ id: string }>
   const [editing, setEditing] = useState<Guest | null>(null);
   const [relOpen, setRelOpen] = useState<Guest | null>(null);
 
+  function copyRsvp(token: string) {
+    navigator.clipboard?.writeText(`${window.location.origin}/rsvp/${token}`);
+  }
+
   const save = useMutation({
     mutationFn: (body: object) => {
       if (editing) {
@@ -87,7 +93,7 @@ export default function GuestsPage({ params }: { params: Promise<{ id: string }>
   });
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6 animate-fade-up">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-3xl text-slate-900">Convidados</h1>
         <Button variant="gold" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="h-4 w-4" /> Novo</Button>
@@ -113,8 +119,18 @@ export default function GuestsPage({ params }: { params: Promise<{ id: string }>
             </tr>
           </thead>
           <tbody>
+            {!guests &&
+              Array.from({ length: 4 }).map((_, i) => (
+                <tr key={`sk-${i}`} className="border-t border-slate-100">
+                  <td className="p-3"><Skeleton className="h-4 w-32" /></td>
+                  <td className="p-3"><Skeleton className="h-4 w-40" /></td>
+                  <td className="p-3"><Skeleton className="h-5 w-16 rounded-full" /></td>
+                  <td className="p-3"><Skeleton className="h-4 w-20" /></td>
+                  <td className="p-3" />
+                </tr>
+              ))}
             {filtered.map((g) => (
-              <tr key={g.id} className="border-t border-slate-100">
+              <tr key={g.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50/60">
                 <td className="p-3 font-medium">{g.name}</td>
                 <td className="p-3 text-slate-500">{g.email ?? g.phone ?? "—"}</td>
                 <td className="p-3">
@@ -124,13 +140,14 @@ export default function GuestsPage({ params }: { params: Promise<{ id: string }>
                   {g.seat ? `${g.seat.table.name} #${g.seat.number}` : "—"}
                 </td>
                 <td className="p-3 flex gap-1 justify-end">
+                  <Button variant="ghost" size="icon" onClick={() => copyRsvp(g.rsvpToken)} aria-label="Copiar link de RSVP"><Share2 className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" onClick={() => setRelOpen(g)} aria-label="Relacionamentos"><Link2 className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" onClick={() => { setEditing(g); setOpen(true); }} aria-label="Editar"><Edit className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" onClick={() => remove.mutate(g.id)} aria-label="Excluir"><Trash2 className="h-4 w-4 text-red-500" /></Button>
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && (
+            {guests && filtered.length === 0 && (
               <tr><td colSpan={5} className="p-6 text-center text-slate-500">Nenhum convidado.</td></tr>
             )}
           </tbody>
