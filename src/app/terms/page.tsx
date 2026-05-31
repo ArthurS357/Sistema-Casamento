@@ -32,7 +32,7 @@ export default function TermsPage() {
         <p>
           O Atelier é uma ferramenta de planejamento de casamentos que permite gerenciar lista
           de convidados, confirmações de presença (RSVP), orçamento, mesas e assentos. O serviço
-          é oferecido em um plano gratuito e em um plano Premium por assinatura.
+          é oferecido em um plano gratuito e em planos pagos (Pro e Gestor) por assinatura.
         </p>
       </LegalSection>
 
@@ -81,9 +81,9 @@ export default function TermsPage() {
       <LegalSection title="6. Assinatura, cobrança e cancelamento">
         <LegalList
           items={[
-            "O plano gratuito não exige pagamento. O plano Premium é cobrado por assinatura recorrente, processada pela Stripe;",
+            "O plano gratuito não exige pagamento. Os planos pagos (Pro e Gestor) são cobrados por assinatura recorrente, processada pela Stripe;",
             "A assinatura é renovada automaticamente ao fim de cada ciclo, até que seja cancelada;",
-            "Você pode cancelar a assinatura a qualquer momento pelo painel de configurações; o acesso Premium permanece até o fim do ciclo já pago;",
+            "Você pode cancelar a assinatura a qualquer momento pelo painel de configurações; o acesso pago permanece até o fim do ciclo já pago;",
             "Salvo exigência legal, valores já pagos referentes ao ciclo em curso não são reembolsados;",
             "Preços e funcionalidades dos planos podem mudar, com aviso prévio razoável.",
           ]}

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PLANS } from "@/lib/plans";
 
 export const RsvpStatus = z.enum(["pending", "confirmed", "declined", "maybe"]);
 export type RsvpStatus = z.infer<typeof RsvpStatus>;
@@ -12,7 +13,7 @@ export type RelType = z.infer<typeof RelType>;
 export const Role = z.enum(["couple", "planner"]);
 export type Role = z.infer<typeof Role>;
 
-export const Plan = z.enum(["free", "basic", "pro", "business"]);
+export const Plan = z.enum(PLANS);
 export type Plan = z.infer<typeof Plan>;
 
 export const ExpenseCategory = z.enum([

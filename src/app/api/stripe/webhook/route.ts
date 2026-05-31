@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
-import { stripe } from "@/lib/stripe";
+import { stripe, planForPriceId } from "@/lib/stripe";
 import { prisma } from "@/lib/db";
+import { isPaidPlan } from "@/lib/plans";
 
 export async function POST(req: Request) {
   const sig = req.headers.get("stripe-signature");
@@ -28,11 +29,12 @@ export async function POST(req: Request) {
       case "checkout.session.completed": {
         const s = event.data.object as Stripe.Checkout.Session;
         const workspaceId = s.metadata?.workspaceId;
-        if (workspaceId) {
+        const plan = s.metadata?.plan;
+        if (workspaceId && plan && isPaidPlan(plan)) {
           await prisma.workspace.update({
             where: { id: workspaceId },
             data: {
-              plan: "premium",
+              plan,
               stripeCustomerId: typeof s.customer === "string" ? s.customer : undefined,
               stripeSubscriptionId:
                 typeof s.subscription === "string" ? s.subscription : undefined,
@@ -45,9 +47,10 @@ export async function POST(req: Request) {
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
         const active = sub.status === "active" || sub.status === "trialing";
+        const plan = planForPriceId(sub.items.data[0]?.price.id);
         await prisma.workspace.updateMany({
           where: { stripeSubscriptionId: sub.id },
-          data: { plan: active ? "premium" : "free" },
+          data: { plan: active && plan ? plan : "free" },
         });
         break;
       }

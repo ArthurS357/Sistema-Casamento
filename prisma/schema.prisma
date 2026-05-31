@@ -73,7 +73,7 @@ model Workspace {
   id                   String       @id @default(cuid())
   name                 String
   slug                 String       @unique
-  plan                 String       @default("free") // free | premium (flag de monetização)
+  plan                 String       @default("free") // free | pro | gestor (ver src/lib/plans.ts)
   stripeCustomerId     String?      @unique
   stripeSubscriptionId String?      @unique
   memberships          Membership[]

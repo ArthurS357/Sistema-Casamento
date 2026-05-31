@@ -77,7 +77,7 @@ export default function PrivacyPage() {
             "Permitir que convidados confirmem presença (RSVP) por link exclusivo, sem necessidade de login;",
             "Organizar a logística do casamento: lista de convidados, mesas, assentos e restrições alimentares;",
             "Controlar o orçamento e as despesas do evento;",
-            "Processar a assinatura do plano Premium e gerenciar a cobrança;",
+            "Processar a assinatura dos planos pagos (Pro e Gestor) e gerenciar a cobrança;",
             "Cumprir obrigações legais e regulatórias aplicáveis.",
           ]}
         />
