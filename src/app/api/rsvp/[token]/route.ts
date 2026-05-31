@@ -7,6 +7,7 @@ type Params = { params: Promise<{ token: string }> };
 const select = {
   name: true,
   rsvpStatus: true,
+  companions: true,
   dietaryRestrictions: true,
   wedding: { select: { title: true, date: true } },
 } as const;

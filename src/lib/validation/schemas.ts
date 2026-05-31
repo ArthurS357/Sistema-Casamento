@@ -32,6 +32,7 @@ export const GuestCreateSchema = z.object({
   email: emailOpt,
   phone: phoneOpt,
   rsvpStatus: RsvpStatus.default("pending"),
+  companions: z.number().int().nonnegative().default(0),
   dietaryRestrictions: z.string().trim().max(500).optional().or(z.literal("").transform(() => undefined)),
   notes: z.string().trim().max(2000).optional().or(z.literal("").transform(() => undefined)),
 });
@@ -62,6 +63,7 @@ export const SeatCreateSchema = z.object({
 
 export const RsvpPublicSchema = z.object({
   rsvpStatus: z.enum(["confirmed", "declined", "maybe"]),
+  companions: z.number().int().nonnegative().optional(),
   dietaryRestrictions: z.string().trim().max(500).optional().or(z.literal("").transform(() => undefined)),
 });
 
