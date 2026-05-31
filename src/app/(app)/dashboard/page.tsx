@@ -83,7 +83,7 @@ export default function DashboardPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {requiresUpgradeBanner(plan) && (
-        <Card className="border-gold-300 bg-gold-50 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both">
+        <Card className="border-gold-300 bg-gold-50/60 backdrop-blur-md animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both">
           <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 gap-4">
             <div className="flex items-center gap-4">
               <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gold-200/50 text-gold-700">
@@ -129,7 +129,7 @@ export default function DashboardPage() {
       </header>
 
       {weddings && weddings.length === 0 && (
-        <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both" style={{ animationDelay: "200ms" }}>
+        <Card className="bg-white/40 backdrop-blur-md border-white/40 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both" style={{ animationDelay: "200ms" }}>
           <CardContent className="text-center py-12 text-slate-500">
             Nenhum casamento ainda. Clique em <strong>Novo</strong> para começar.
           </CardContent>
@@ -140,7 +140,7 @@ export default function DashboardPage() {
         {weddings?.map((w, i) => (
           <Link key={w.id} href={`/weddings/${w.id}`}>
             <Card 
-              className="hover:shadow-md hover:ring-2 hover:ring-offset-2 hover:ring-gold-300 hover:-translate-y-0.5 transition-all cursor-pointer animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both"
+              className="bg-white/40 backdrop-blur-md border-white/40 hover:bg-white/60 hover:shadow-md hover:ring-2 hover:ring-offset-2 hover:ring-gold-300 hover:-translate-y-0.5 transition-all cursor-pointer animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both"
               style={{ animationDelay: `${200 + i * 100}ms` }}
             >
               <CardContent className="space-y-3 pt-6">
