@@ -10,13 +10,13 @@ export function LandingHero() {
         className="pointer-events-none absolute -top-32 left-1/2 h-[420px] w-[820px] -translate-x-1/2 rounded-full bg-gold-200/40 blur-3xl"
       />
       <div className="relative mx-auto max-w-4xl px-6 pb-24 pt-40 text-center sm:pt-48">
-        <span className="animate-fade-up inline-flex items-center gap-2 rounded-full border border-gold-200 bg-white/70 px-4 py-1.5 text-xs font-medium uppercase tracking-widest text-gold-700">
+        <span className="animate-in fade-in slide-in-from-bottom-6 duration-700 ease-out fill-mode-both inline-flex items-center gap-2 rounded-full border border-gold-200 bg-white/70 px-4 py-1.5 text-xs font-medium uppercase tracking-widest text-gold-700">
           <Sparkles className="h-3.5 w-3.5" aria-hidden />
           Planejamento de casamentos sem caos
         </span>
 
         <h1
-          className="animate-fade-up mt-8 font-display text-5xl leading-[1.05] text-slate-900 sm:text-6xl md:text-7xl"
+          className="animate-in fade-in slide-in-from-bottom-6 duration-700 ease-out fill-mode-both mt-8 font-display text-5xl leading-[1.05] text-slate-900 sm:text-6xl md:text-7xl"
           style={{ animationDelay: "80ms" }}
         >
           O seu grande dia,
@@ -24,7 +24,7 @@ export function LandingHero() {
         </h1>
 
         <p
-          className="animate-fade-up mx-auto mt-6 max-w-xl text-lg leading-relaxed text-slate-600"
+          className="animate-in fade-in slide-in-from-bottom-6 duration-700 ease-out fill-mode-both mx-auto mt-6 max-w-xl text-lg leading-relaxed text-slate-600"
           style={{ animationDelay: "160ms" }}
         >
           Convidados, confirmações de presença, orçamento e disposição das mesas
@@ -33,7 +33,7 @@ export function LandingHero() {
         </p>
 
         <div
-          className="animate-fade-up mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row"
+          className="animate-in fade-in slide-in-from-bottom-6 duration-700 ease-out fill-mode-both mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row"
           style={{ animationDelay: "240ms" }}
         >
           <Link href="/register">
@@ -51,7 +51,7 @@ export function LandingHero() {
         </div>
 
         <p
-          className="animate-fade-up mt-5 text-sm text-slate-500"
+          className="animate-in fade-in slide-in-from-bottom-6 duration-700 ease-out fill-mode-both mt-5 text-sm text-slate-500"
           style={{ animationDelay: "320ms" }}
         >
           Comece grátis. Sem cartão de crédito.

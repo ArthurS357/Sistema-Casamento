@@ -3,6 +3,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,7 +36,15 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4">
+    <main className="min-h-screen flex items-center justify-center px-4 relative">
+      <div className="absolute top-6 left-6 animate-in fade-in slide-in-from-left-4 duration-500 fill-mode-both">
+        <Link href="/">
+          <Button variant="ghost" size="sm" className="text-slate-500 hover:text-slate-900">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar
+          </Button>
+        </Link>
+      </div>
       <Card className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
         <CardHeader>
           <CardTitle>Criar conta</CardTitle>

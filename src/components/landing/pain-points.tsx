@@ -43,7 +43,7 @@ export function LandingPainPoints() {
           {pains.map((pain, i) => (
             <article
               key={pain.title}
-              className="animate-fade-up rounded-2xl border border-slate-200 bg-white p-7 shadow-sm"
+              className="animate-in fade-in slide-in-from-bottom-6 duration-700 ease-out fill-mode-both rounded-2xl border border-slate-200 bg-white p-7 shadow-sm"
               style={{ animationDelay: `${i * 80}ms` }}
             >
               <div className="grid h-11 w-11 place-items-center rounded-xl bg-rose-50 text-rose-500">

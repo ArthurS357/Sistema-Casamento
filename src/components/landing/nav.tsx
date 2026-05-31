@@ -1,3 +1,5 @@
+"use client";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,8 +11,25 @@ const sections = [
 ];
 
 export function LandingNav() {
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setIsVisible(false);
+      } else {
+        setIsVisible(true);
+      }
+      setLastScrollY(currentScrollY);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY]);
+
   return (
-    <header className="fixed inset-x-0 top-0 z-50 px-4 pt-4">
+    <header className={`fixed inset-x-0 top-0 z-50 px-4 pt-4 transition-transform duration-300 ease-in-out ${isVisible ? "translate-y-0" : "-translate-y-[150%]"}`}>
       <nav className="mx-auto flex max-w-6xl items-center justify-between rounded-full border border-slate-200/70 bg-white/80 px-5 py-3 shadow-sm backdrop-blur-md">
         <Link href="/" className="flex items-center gap-2 font-display text-lg text-slate-900">
           <span className="grid h-8 w-8 place-items-center rounded-full bg-gold-400 text-slate-900">

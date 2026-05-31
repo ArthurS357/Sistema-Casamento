@@ -54,7 +54,7 @@ export function LandingSolution() {
           {features.map((f, i) => (
             <article
               key={f.title}
-              className="animate-fade-up group rounded-2xl border border-slate-200 bg-white p-7 shadow-sm transition-shadow hover:shadow-md"
+              className="animate-in fade-in slide-in-from-bottom-6 duration-700 ease-out fill-mode-both group rounded-2xl border border-slate-200 bg-white p-7 shadow-sm transition-shadow hover:shadow-md"
               style={{ animationDelay: `${(i % 3) * 80}ms` }}
             >
               <div className="grid h-11 w-11 place-items-center rounded-xl bg-gold-50 text-gold-600 transition-colors group-hover:bg-gold-100">
