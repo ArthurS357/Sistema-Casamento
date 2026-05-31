@@ -5,6 +5,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/db";
 import { verifyPassword } from "@/lib/auth/password";
 import { ensurePersonalWorkspace } from "@/lib/workspace";
+import { authLimiter, checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const credSchema = z.object({
@@ -27,7 +28,11 @@ export const authConfig: NextAuthConfig = {
         email: { label: "Email", type: "email" },
         password: { label: "Senha", type: "password" },
       },
-      async authorize(raw) {
+      async authorize(raw, req) {
+        // Rate limit por IP antes de tocar no banco: contém brute-force.
+        const ip = getClientIp(req as Request);
+        const { success } = await checkRateLimit(authLimiter, `login:${ip}`);
+        if (!success) return null;
         const parsed = credSchema.safeParse(raw);
         if (!parsed.success) return null;
         const { email, password } = parsed.data;

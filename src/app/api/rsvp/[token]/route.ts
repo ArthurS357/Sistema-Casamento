@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { RsvpPublicSchema } from "@/lib/validation/schemas";
+import { publicLimiter, enforceRateLimit } from "@/lib/rate-limit";
 
 type Params = { params: Promise<{ token: string }> };
 
@@ -10,7 +11,9 @@ const select = {
   wedding: { select: { title: true, date: true } },
 } as const;
 
-export async function GET(_req: Request, { params }: Params) {
+export async function GET(req: Request, { params }: Params) {
+  const limited = await enforceRateLimit(req, publicLimiter, "rsvp");
+  if (limited) return limited;
   const { token } = await params;
   const guest = await prisma.guest.findUnique({ where: { rsvpToken: token }, select });
   if (!guest) return Response.json({ error: "NotFound" }, { status: 404 });
@@ -18,6 +21,8 @@ export async function GET(_req: Request, { params }: Params) {
 }
 
 export async function PATCH(req: Request, { params }: Params) {
+  const limited = await enforceRateLimit(req, publicLimiter, "rsvp");
+  if (limited) return limited;
   const { token } = await params;
   const exists = await prisma.guest.findUnique({
     where: { rsvpToken: token },

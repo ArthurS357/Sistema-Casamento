@@ -3,9 +3,12 @@ import { hashPassword } from "@/lib/auth/password";
 import { RegisterSchema } from "@/lib/validation/schemas";
 import { errorResponse } from "@/lib/auth/guards";
 import { ensurePersonalWorkspace } from "@/lib/workspace";
+import { authLimiter, enforceRateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   try {
+    const limited = await enforceRateLimit(req, authLimiter, "register");
+    if (limited) return limited;
     const body = await req.json();
     const data = RegisterSchema.parse(body);
     const exists = await prisma.user.findUnique({ where: { email: data.email } });
