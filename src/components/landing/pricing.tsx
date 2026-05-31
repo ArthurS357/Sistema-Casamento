@@ -72,9 +72,12 @@ const plans: PlanCard[] = [
   },
 ];
 
+const BASE =
+  "transition-[opacity,transform] duration-1000 ease-out will-change-[opacity,transform]";
+
 export function LandingPricing() {
   const { ref, isVisible } = useScrollReveal<HTMLDivElement>();
-  const animClass = isVisible ? "animate-in fade-in slide-in-from-bottom-4 fill-mode-both duration-700 ease-out" : "opacity-0 translate-y-4";
+  const visible = isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8";
 
   return (
     <section id="planos" className="bg-slate-50 py-24">
@@ -96,10 +99,12 @@ export function LandingPricing() {
           {plans.map((plan, i) => (
             <article
               key={plan.id}
-              style={{ animationDelay: `${i * 100}ms` }}
+              style={{ transitionDelay: isVisible ? `${i * 100}ms` : "0ms" }}
               className={cn(
-                animClass,
-                "relative flex flex-col rounded-3xl border bg-white p-8 shadow-sm transition-all hover:scale-[1.02] hover:ring-2 hover:ring-offset-2 hover:ring-gold-300 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-gold-400 cursor-pointer",
+                BASE,
+                visible,
+                "hover:duration-150",
+                "relative flex flex-col rounded-3xl border bg-white p-8 shadow-sm hover:scale-[1.02] hover:ring-2 hover:ring-offset-2 hover:ring-gold-300 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-gold-400 cursor-pointer",
                 plan.featured
                   ? "border-gold-300 ring-1 ring-gold-200 md:-translate-y-2"
                   : "border-slate-200",

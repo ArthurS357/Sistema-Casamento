@@ -37,9 +37,12 @@ const features = [
   },
 ];
 
+const BASE =
+  "transition-[opacity,transform] duration-1000 ease-out will-change-[opacity,transform]";
+
 export function LandingSolution() {
   const { ref, isVisible } = useScrollReveal<HTMLDivElement>();
-  const animClass = isVisible ? "animate-in fade-in slide-in-from-bottom-6 duration-700 ease-out fill-mode-both" : "opacity-0 translate-y-6";
+  const visible = isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8";
 
   return (
     <section id="solucao" className="py-24">
@@ -61,8 +64,12 @@ export function LandingSolution() {
           {features.map((f, i) => (
             <article
               key={f.title}
-              className={cn(animClass, "group rounded-2xl border border-slate-200 bg-white p-7 shadow-sm transition-shadow hover:shadow-md")}
-              style={{ animationDelay: `${(i % 3) * 80}ms` }}
+              className={cn(
+                BASE,
+                visible,
+                "group rounded-2xl border border-slate-200 bg-white p-7 shadow-sm hover:shadow-md",
+              )}
+              style={{ transitionDelay: isVisible ? `${(i % 3) * 80}ms` : "0ms" }}
             >
               <div className="grid h-11 w-11 place-items-center rounded-xl bg-gold-50 text-gold-600 transition-colors group-hover:bg-gold-100">
                 <f.icon className="h-5 w-5" aria-hidden />

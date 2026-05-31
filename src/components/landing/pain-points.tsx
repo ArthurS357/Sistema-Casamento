@@ -27,9 +27,12 @@ const pains = [
   },
 ];
 
+const BASE =
+  "transition-[opacity,transform] duration-1000 ease-out will-change-[opacity,transform]";
+
 export function LandingPainPoints() {
   const { ref, isVisible } = useScrollReveal<HTMLDivElement>();
-  const animClass = isVisible ? "animate-in fade-in slide-in-from-bottom-6 duration-700 ease-out fill-mode-both" : "opacity-0 translate-y-6";
+  const visible = isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8";
 
   return (
     <section id="dores" className="bg-slate-50 py-24">
@@ -50,8 +53,8 @@ export function LandingPainPoints() {
           {pains.map((pain, i) => (
             <article
               key={pain.title}
-              className={cn(animClass, "rounded-2xl border border-slate-200 bg-white p-7 shadow-sm")}
-              style={{ animationDelay: `${i * 80}ms` }}
+              className={cn(BASE, visible, "rounded-2xl border border-slate-200 bg-white p-7 shadow-sm")}
+              style={{ transitionDelay: isVisible ? `${i * 80}ms` : "0ms" }}
             >
               <div className="grid h-11 w-11 place-items-center rounded-xl bg-rose-50 text-rose-500">
                 <pain.icon className="h-5 w-5" aria-hidden />
