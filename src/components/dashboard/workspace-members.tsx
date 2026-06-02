@@ -144,7 +144,7 @@ export function WorkspaceMembers({ plan }: { plan: string }) {
                 </p>
               </div>
             </div>
-            <Link href="/#planos" className="w-full sm:w-auto shrink-0">
+            <Link href="/pricing" className="w-full sm:w-auto shrink-0">
               <Button variant="gold" className="w-full">Fazer Upgrade</Button>
             </Link>
           </div>

@@ -2,6 +2,7 @@ import { expect, test } from 'vitest';
 import {
   canManageMultipleWeddings,
   canViewAdvancedAnalytics,
+  canAccessManagerAnalytics,
   requiresUpgradeBanner,
   canAccessPremiumFeatures,
   canCreateWedding,
@@ -33,7 +34,14 @@ test('canAccessPremiumFeatures gates Free out of gifts/tables', () => {
   expect(canAccessPremiumFeatures('gestor')).toBe(true);
 });
 
-test('canCreateWedding: Free=1, Pro=2, Gestor=ilimitado', () => {
+test('canViewAdvancedAnalytics vs canAccessManagerAnalytics', () => {
+  // Analytics avançado (Pro+Gestor) vs Dashboard Analítico exclusivo do Gestor.
+  expect(canAccessManagerAnalytics('free')).toBe(false);
+  expect(canAccessManagerAnalytics('pro')).toBe(false);
+  expect(canAccessManagerAnalytics('gestor')).toBe(true);
+});
+
+test('canCreateWedding: Free=1, Pro=2, Gestor=5', () => {
   // Free: 1 casamento no máximo.
   expect(canCreateWedding('free', 0)).toBe(true);
   expect(canCreateWedding('free', 1)).toBe(false);
@@ -41,9 +49,10 @@ test('canCreateWedding: Free=1, Pro=2, Gestor=ilimitado', () => {
   expect(canCreateWedding('pro', 0)).toBe(true);
   expect(canCreateWedding('pro', 1)).toBe(true);
   expect(canCreateWedding('pro', 2)).toBe(false);
-  // Gestor: ilimitado.
+  // Gestor: até 5 casamentos (não é mais ilimitado).
   expect(canCreateWedding('gestor', 0)).toBe(true);
-  expect(canCreateWedding('gestor', 5)).toBe(true);
+  expect(canCreateWedding('gestor', 4)).toBe(true);
+  expect(canCreateWedding('gestor', 5)).toBe(false);
   // Plano desconhecido cai no fail-safe restritivo (free).
   expect(canCreateWedding('desconhecido', 1)).toBe(false);
 });

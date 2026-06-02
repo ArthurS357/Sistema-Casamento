@@ -18,6 +18,8 @@ interface Wedding {
   title: string;
   date: string;
   budgetTotal: number;
+  partner1Name: string | null;
+  partner2Name: string | null;
 }
 
 interface Workspace {
@@ -42,6 +44,8 @@ export default function DashboardPage() {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
   const [budget, setBudget] = useState("");
+  const [partner1, setPartner1] = useState("");
+  const [partner2, setPartner2] = useState("");
 
   const create = useMutation({
     mutationFn: () =>
@@ -51,12 +55,14 @@ export default function DashboardPage() {
           title,
           date: new Date(date).toISOString(),
           budgetTotal: budget ? toCents(Number(budget)) : 0,
+          partner1Name: partner1.trim() || undefined,
+          partner2Name: partner2.trim() || undefined,
         }),
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["weddings"] });
       setOpen(false);
-      setTitle(""); setDate(""); setBudget("");
+      setTitle(""); setDate(""); setBudget(""); setPartner1(""); setPartner2("");
     },
   });
 
@@ -95,7 +101,7 @@ export default function DashboardPage() {
                 <p className="text-sm text-slate-600">Desbloqueie acesso total a convidados, RSVP e controle completo do grande dia.</p>
               </div>
             </div>
-            <Link href="/#planos" className="w-full sm:w-auto shrink-0">
+            <Link href="/pricing" className="w-full sm:w-auto shrink-0">
               <Button variant="gold" className="w-full">Fazer Upgrade</Button>
             </Link>
           </CardContent>
@@ -118,6 +124,10 @@ export default function DashboardPage() {
                 onSubmit={(e) => { e.preventDefault(); create.mutate(); }}
               >
                 <div><Label htmlFor="t">Título</Label><Input id="t" required value={title} onChange={(e) => setTitle(e.target.value)} /></div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label htmlFor="p1">Noivo(a) 1</Label><Input id="p1" value={partner1} onChange={(e) => setPartner1(e.target.value)} placeholder="Ex.: Ana" /></div>
+                  <div><Label htmlFor="p2">Noivo(a) 2</Label><Input id="p2" value={partner2} onChange={(e) => setPartner2(e.target.value)} placeholder="Ex.: Bruno" /></div>
+                </div>
                 <div><Label htmlFor="d">Data</Label><Input id="d" type="date" required value={date} onChange={(e) => setDate(e.target.value)} /></div>
                 <div><Label htmlFor="b">Orçamento (R$)</Label><Input id="b" type="number" min="0" step="0.01" value={budget} onChange={(e) => setBudget(e.target.value)} /></div>
                 <Button variant="gold" type="submit" disabled={create.isPending} className="w-full">
@@ -146,6 +156,11 @@ export default function DashboardPage() {
             >
               <CardContent className="space-y-3 pt-6">
                 <h2 className="font-display text-xl text-slate-900">{w.title}</h2>
+                {(w.partner1Name || w.partner2Name) && (
+                  <p className="text-sm text-slate-500">
+                    {[w.partner1Name, w.partner2Name].filter(Boolean).join(" & ")}
+                  </p>
+                )}
                 <div className="flex items-center gap-2 text-sm text-slate-500">
                   <CalendarDays className="h-4 w-4" />
                   {new Date(w.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}

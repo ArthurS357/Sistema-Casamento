@@ -46,7 +46,7 @@ export function Paywall({ title, description, benefits = [] }: PaywallProps) {
             </ul>
           )}
 
-          <Link href="/#planos" className="mt-8 inline-block w-full sm:w-auto">
+          <Link href="/pricing" className="mt-8 inline-block w-full sm:w-auto">
             <Button variant="gold" size="lg" className="w-full sm:w-auto px-8 shadow-lg shadow-gold-200/50">
               <Crown className="h-5 w-5" /> Fazer Upgrade para o PRO
             </Button>

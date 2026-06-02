@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 const sections = [
   { href: "/#dores", label: "Desafios" },
   { href: "/#solucao", label: "Solução" },
-  { href: "/#planos", label: "Planos" },
+  { href: "/pricing", label: "Planos" },
 ];
 
 export function LandingNav() {

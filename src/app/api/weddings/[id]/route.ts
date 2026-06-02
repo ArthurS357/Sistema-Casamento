@@ -32,6 +32,9 @@ export async function PUT(req: Request, { params }: Params) {
   }
 }
 
+// PATCH = mesma semântica de atualização parcial que PUT (couple names, pixKey…).
+export const PATCH = PUT;
+
 export async function DELETE(_req: Request, { params }: Params) {
   try {
     const { id } = await params;

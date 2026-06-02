@@ -41,10 +41,19 @@ export const WorkspaceMemberInviteSchema = z.object({
 });
 export type WorkspaceMemberInviteInput = z.infer<typeof WorkspaceMemberInviteSchema>;
 
+const partnerNameOpt = z
+  .string()
+  .trim()
+  .max(120)
+  .optional()
+  .or(z.literal("").transform(() => undefined));
+
 export const WeddingCreateSchema = z.object({
   title: nonEmpty,
   date: z.coerce.date(),
   budgetTotal: cents.default(0),
+  partner1Name: partnerNameOpt,
+  partner2Name: partnerNameOpt,
   pixKey: pixKeyOpt,
 });
 export const WeddingUpdateSchema = WeddingCreateSchema.partial().extend({

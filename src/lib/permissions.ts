@@ -1,13 +1,14 @@
 import { Plan, isPaidPlan, isPlan } from "./plans";
 
 /**
- * Limites quantitativos por plano. `Infinity` = ilimitado (gestor).
+ * Limites quantitativos por plano. `Infinity` = ilimitado.
  * Fonte única de verdade para casamentos e membros do workspace.
+ * Gestor: casamentos limitados a 5 (assessoria), membros ilimitados.
  */
 export const PLAN_LIMITS = {
   free: { weddings: 1, members: 1 },
   pro: { weddings: 2, members: 2 },
-  gestor: { weddings: Infinity, members: Infinity },
+  gestor: { weddings: 5, members: Infinity },
 } as const satisfies Record<Plan, { weddings: number; members: number }>;
 
 /** Normaliza plano desconhecido para "free" (fail-safe restritivo). */
@@ -21,6 +22,14 @@ export function canManageMultipleWeddings(plan: Plan | string): boolean {
 
 export function canViewAdvancedAnalytics(plan: Plan | string): boolean {
   return plan === "pro" || plan === "gestor";
+}
+
+/**
+ * Dashboard Analítico avançado por casamento: exclusivo do plano Gestor
+ * (engajamento de convidados, projeção de custos, relatório de fornecedores).
+ */
+export function canAccessManagerAnalytics(plan: Plan | string): boolean {
+  return plan === "gestor";
 }
 
 export function requiresUpgradeBanner(plan: Plan | string): boolean {
@@ -37,7 +46,7 @@ export function canAccessPremiumFeatures(plan: Plan | string): boolean {
 
 /**
  * Limite de casamentos por plano (ver PLAN_LIMITS): Free = 1, Pro = 2,
- * Gestor = ilimitado.
+ * Gestor = 5.
  */
 export function canCreateWedding(plan: Plan | string, currentCount: number): boolean {
   return currentCount < limitsFor(plan).weddings;

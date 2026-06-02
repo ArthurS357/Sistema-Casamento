@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     const data = WeddingCreateSchema.parse(await req.json());
     const workspaceId = await getActiveWorkspaceId(userId);
 
-    // Paywall: plano Free limitado a 1 casamento (gestor é ilimitado).
+    // Paywall por plano: Free=1, Pro=2, Gestor=5 (ver PLAN_LIMITS).
     const ws = await prisma.workspace.findUniqueOrThrow({
       where: { id: workspaceId },
       select: { plan: true, _count: { select: { weddings: true } } },
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     if (!canCreateWedding(ws.plan, ws._count.weddings)) {
       throw new AuthError(
         403,
-        "Seu plano permite apenas 1 casamento. Faça upgrade para o Pro ou Gestor para criar mais.",
+        "Você atingiu o limite de casamentos do seu plano. Faça upgrade para criar mais.",
       );
     }
 
