@@ -17,6 +17,9 @@ export const RegisterSchema = z.object({
   name: nonEmpty,
   email: z.string().trim().toLowerCase().email(),
   password: z.string().min(8).max(200),
+  termsAccepted: z.boolean().refine((val) => val === true, {
+    message: "Você precisa aceitar os termos para continuar",
+  }),
 });
 export type RegisterInput = z.infer<typeof RegisterSchema>;
 
