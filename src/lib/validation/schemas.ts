@@ -12,6 +12,19 @@ const emailOpt = z
   .or(z.literal("").transform(() => undefined));
 const phoneOpt = z.string().trim().max(40).optional().or(z.literal("").transform(() => undefined));
 const cents = z.number().int().nonnegative().max(1_000_000_000);
+const pixKeyOpt = z
+  .string()
+  .trim()
+  .max(77)
+  .optional()
+  .or(z.literal("").transform(() => undefined));
+const urlOpt = z
+  .string()
+  .trim()
+  .url()
+  .max(2000)
+  .optional()
+  .or(z.literal("").transform(() => undefined));
 
 export const RegisterSchema = z.object({
   name: nonEmpty,
@@ -27,8 +40,12 @@ export const WeddingCreateSchema = z.object({
   title: nonEmpty,
   date: z.coerce.date(),
   budgetTotal: cents.default(0),
+  pixKey: pixKeyOpt,
 });
-export const WeddingUpdateSchema = WeddingCreateSchema.partial();
+export const WeddingUpdateSchema = WeddingCreateSchema.partial().extend({
+  // null limpa a chave; string define; undefined mantém.
+  pixKey: pixKeyOpt.nullable(),
+});
 
 export const GuestCreateSchema = z.object({
   name: nonEmpty,
@@ -51,6 +68,15 @@ export const ExpenseCreateSchema = z.object({
   dueDate: z.coerce.date().nullable().optional(),
 });
 export const ExpenseUpdateSchema = ExpenseCreateSchema.partial();
+
+export const GiftCreateSchema = z.object({
+  title: nonEmpty,
+  description: z.string().trim().max(1000).optional().or(z.literal("").transform(() => undefined)),
+  price: cents,
+  imageUrl: urlOpt,
+  isPurchased: z.boolean().default(false),
+});
+export const GiftUpdateSchema = GiftCreateSchema.partial();
 
 export const TableCreateSchema = z.object({
   name: nonEmpty,

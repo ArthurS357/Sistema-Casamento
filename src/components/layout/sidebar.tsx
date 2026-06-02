@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useState } from "react";
 import {
-  LayoutDashboard, Wallet, Users, Armchair, BarChart3, Settings, LogOut, Menu, X, Heart,
+  LayoutDashboard, Wallet, Users, Armchair, BarChart3, Settings, LogOut, Menu, X, Heart, Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +27,7 @@ export function Sidebar() {
         { href: `/weddings/${weddingId}/budget`, label: "Orçamento", icon: Wallet },
         { href: `/weddings/${weddingId}/guests`, label: "Convidados", icon: Users },
         { href: `/weddings/${weddingId}/tables`, label: "Mesas", icon: Armchair },
+        { href: `/weddings/${weddingId}/gifts`, label: "Presentes", icon: Gift },
         { href: `/weddings/${weddingId}/reports`, label: "Relatórios", icon: BarChart3 },
       ]
     : [];

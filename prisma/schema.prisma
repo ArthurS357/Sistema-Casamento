@@ -104,16 +104,35 @@ model Wedding {
   title          String
   date           DateTime
   budgetTotal    Int                 @default(0)
+  pixKey         String?             // chave PIX recebedora dos noivos (lista de presentes)
   workspaceId    String
   workspace      Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   guests         Guest[]
   tables         Table[]
   expenses       Expense[]
+  gifts          Gift[]
   guestRelations GuestRelationship[]
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
 
   @@index([workspaceId])
+}
+
+// Lista de presentes. price em centavos (BRL), seguindo a convenção de
+// dinheiro do projeto (ver src/lib/money.ts e Expense.amount).
+model Gift {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  price       Int      @default(0)
+  imageUrl    String?
+  isPurchased Boolean  @default(false)
+  weddingId   String
+  wedding     Wedding  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([weddingId])
 }
 
 model Guest {

@@ -2,7 +2,7 @@
 import { use } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Wallet, Users, Armchair, BarChart3, CalendarDays } from "lucide-react";
+import { Wallet, Users, Armchair, BarChart3, CalendarDays, Gift } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatBRL } from "@/lib/money";
@@ -12,7 +12,7 @@ interface WeddingDetail {
   title: string;
   date: string;
   budgetTotal: number;
-  _count: { guests: number; expenses: number; tables: number };
+  _count: { guests: number; expenses: number; tables: number; gifts: number };
 }
 
 export default function WeddingHome({ params }: { params: Promise<{ id: string }> }) {
@@ -28,6 +28,7 @@ export default function WeddingHome({ params }: { params: Promise<{ id: string }
     { href: `/weddings/${id}/budget`, label: "Orçamento", icon: Wallet, tone: "text-money-600", value: formatBRL(data.budgetTotal) },
     { href: `/weddings/${id}/guests`, label: "Convidados", icon: Users, tone: "text-gold-500", value: String(data._count.guests) },
     { href: `/weddings/${id}/tables`, label: "Mesas", icon: Armchair, tone: "text-slate-700", value: String(data._count.tables) },
+    { href: `/weddings/${id}/gifts`, label: "Presentes", icon: Gift, tone: "text-gold-500", value: String(data._count.gifts) },
     { href: `/weddings/${id}/reports`, label: "Despesas", icon: BarChart3, tone: "text-slate-700", value: String(data._count.expenses) },
   ];
 
