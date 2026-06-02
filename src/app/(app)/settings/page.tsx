@@ -11,6 +11,7 @@ import { apiFetch } from "@/lib/api";
 import { useActivePlan } from "@/lib/use-plan";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { NameInput } from "@/components/ui/name-input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -213,9 +214,9 @@ export default function SettingsPage() {
                     if (editName.trim()) updateName.mutate(editName.trim());
                   }}
                 >
-                  <Input
+                  <NameInput
                     value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
+                    onValueChange={setEditName}
                     className="h-8 w-48"
                     autoFocus
                   />

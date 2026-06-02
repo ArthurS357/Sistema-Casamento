@@ -9,8 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input, Label } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
+import { DatePicker } from "@/components/ui/date-picker";
+import { NameInput } from "@/components/ui/name-input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { formatBRL, toCents } from "@/lib/money";
+import { formatBRL } from "@/lib/money";
 import { canManageMultipleWeddings, requiresUpgradeBanner, canCreateWedding } from "@/lib/permissions";
 import { WorkspaceMembers } from "@/components/dashboard/workspace-members";
 
@@ -45,8 +48,8 @@ export default function DashboardPage() {
 
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
-  const [date, setDate] = useState("");
-  const [budget, setBudget] = useState("");
+  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [budget, setBudget] = useState<number | undefined>(undefined);
   const [partner1, setPartner1] = useState("");
   const [partner2, setPartner2] = useState("");
 
@@ -56,8 +59,8 @@ export default function DashboardPage() {
         method: "POST",
         body: JSON.stringify({
           title,
-          date: new Date(date).toISOString(),
-          budgetTotal: budget ? toCents(Number(budget)) : 0,
+          date: date ? date.toISOString() : new Date().toISOString(),
+          budgetTotal: budget || 0,
           partner1Name: partner1.trim() || undefined,
           partner2Name: partner2.trim() || undefined,
         }),
@@ -65,7 +68,7 @@ export default function DashboardPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["weddings"] });
       setOpen(false);
-      setTitle(""); setDate(""); setBudget(""); setPartner1(""); setPartner2("");
+      setTitle(""); setDate(undefined); setBudget(undefined); setPartner1(""); setPartner2("");
     },
   });
 
@@ -197,11 +200,11 @@ export default function DashboardPage() {
               >
                 <div><Label htmlFor="t">Título</Label><Input id="t" required value={title} onChange={(e) => setTitle(e.target.value)} /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label htmlFor="p1">Noivo(a) 1</Label><Input id="p1" value={partner1} onChange={(e) => setPartner1(e.target.value)} placeholder="Ex.: Ana" /></div>
-                  <div><Label htmlFor="p2">Noivo(a) 2</Label><Input id="p2" value={partner2} onChange={(e) => setPartner2(e.target.value)} placeholder="Ex.: Bruno" /></div>
+                  <div><Label htmlFor="p1">Noivo(a) 1</Label><NameInput id="p1" value={partner1} onValueChange={setPartner1} placeholder="Ex.: Ana" /></div>
+                  <div><Label htmlFor="p2">Noivo(a) 2</Label><NameInput id="p2" value={partner2} onValueChange={setPartner2} placeholder="Ex.: Bruno" /></div>
                 </div>
-                <div><Label htmlFor="d">Data</Label><Input id="d" type="date" required value={date} onChange={(e) => setDate(e.target.value)} /></div>
-                <div><Label htmlFor="b">Orçamento (R$)</Label><Input id="b" type="number" min="0" step="0.01" value={budget} onChange={(e) => setBudget(e.target.value)} /></div>
+                <div><Label>Data</Label><DatePicker value={date} onChange={setDate} /></div>
+                <div><Label htmlFor="b">Orçamento</Label><CurrencyInput id="b" value={budget} onChange={setBudget} placeholder="R$ 0,00" /></div>
                 <Button variant="gold" type="submit" disabled={create.isPending} className="w-full">
                   {create.isPending ? "Criando…" : "Criar"}
                 </Button>

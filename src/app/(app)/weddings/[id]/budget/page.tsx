@@ -5,8 +5,9 @@ import { Plus, Trash2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input, Select, Label } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Card, CardContent } from "@/components/ui/card";
-import { formatBRL, toCents, toReais } from "@/lib/money";
+import { formatBRL } from "@/lib/money";
 import { ExpenseCategory } from "@/lib/validation/enums";
 
 interface Expense {
@@ -58,17 +59,17 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
 
   const [category, setCategory] = useState<string>("venue");
   const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState<number | undefined>(undefined);
 
   function addExpense(e: React.FormEvent) {
     e.preventDefault();
     create.mutate({
       category,
       description: description || undefined,
-      amount: toCents(Number(amount || 0)),
+      amount: amount || 0,
       paid: 0,
     });
-    setDescription(""); setAmount("");
+    setDescription(""); setAmount(undefined);
   }
 
   return (
@@ -107,8 +108,8 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
             <Input id="desc" value={description} onChange={(e) => setDescription(e.target.value)} />
           </div>
           <div>
-            <Label htmlFor="val">Valor (R$)</Label>
-            <Input id="val" type="number" min="0" step="0.01" required value={amount} onChange={(e) => setAmount(e.target.value)} />
+            <Label htmlFor="val">Valor</Label>
+            <CurrencyInput id="val" required value={amount} onChange={setAmount} placeholder="R$ 0,00" />
           </div>
           <div className="flex items-end">
             <Button variant="money" type="submit" disabled={create.isPending}><Plus className="h-4 w-4" /> Adicionar</Button>
@@ -149,14 +150,14 @@ function ExpenseRow({
   onUpdate: (body: object) => void;
   onDelete: () => void;
 }) {
-  const [paid, setPaid] = useState(String(toReais(expense.paid)));
-  const [amount, setAmount] = useState(String(toReais(expense.amount)));
+  const [paid, setPaid] = useState<number | undefined>(expense.paid);
+  const [amount, setAmount] = useState<number | undefined>(expense.amount);
   const [desc, setDesc] = useState(expense.description ?? "");
 
   function blur(field: "paid" | "amount" | "description") {
     const body: Record<string, unknown> = {};
-    if (field === "paid") body.paid = toCents(Number(paid || 0));
-    if (field === "amount") body.amount = toCents(Number(amount || 0));
+    if (field === "paid") body.paid = paid || 0;
+    if (field === "amount") body.amount = amount || 0;
     if (field === "description") body.description = desc || undefined;
     onUpdate(body);
   }
@@ -168,10 +169,10 @@ function ExpenseRow({
         <Input value={desc} onChange={(e) => setDesc(e.target.value)} onBlur={() => blur("description")} className="h-8" />
       </td>
       <td className="p-3 text-right">
-        <Input type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} onBlur={() => blur("amount")} className="h-8 text-right" />
+        <CurrencyInput value={amount} onChange={setAmount} onBlur={() => blur("amount")} className="h-8 text-right" />
       </td>
       <td className="p-3 text-right">
-        <Input type="number" min="0" step="0.01" value={paid} onChange={(e) => setPaid(e.target.value)} onBlur={() => blur("paid")} className="h-8 text-right" />
+        <CurrencyInput value={paid} onChange={setPaid} onBlur={() => blur("paid")} className="h-8 text-right" />
       </td>
       <td className="p-3 text-slate-500">
         {expense.dueDate ? new Date(expense.dueDate).toLocaleDateString("pt-BR") : "—"}

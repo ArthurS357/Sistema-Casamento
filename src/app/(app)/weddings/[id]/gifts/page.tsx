@@ -7,10 +7,11 @@ import {
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea, Label } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { formatBRL, toCents, toReais } from "@/lib/money";
+import { formatBRL } from "@/lib/money";
 import { useActivePlan } from "@/lib/use-plan";
 import { Paywall } from "@/components/paywall";
 
@@ -238,7 +239,7 @@ function GiftDialog({
 }) {
   const [title, setTitle] = useState(editing?.title ?? "");
   const [description, setDescription] = useState(editing?.description ?? "");
-  const [price, setPrice] = useState(editing ? String(toReais(editing.price)) : "");
+  const [price, setPrice] = useState<number | undefined>(editing?.price);
   const [imageUrl, setImageUrl] = useState(editing?.imageUrl ?? "");
 
   return (
@@ -252,13 +253,13 @@ function GiftDialog({
             onSave({
               title,
               description: description || undefined,
-              price: toCents(Number(price) || 0),
+              price: price || 0,
               imageUrl: imageUrl || undefined,
             });
           }}
         >
           <div><Label htmlFor="gt">Título</Label><Input id="gt" required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex.: Cota de Lua de Mel" /></div>
-          <div><Label htmlFor="gp">Valor (R$)</Label><Input id="gp" type="number" min="0" step="0.01" required value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0,00" /></div>
+          <div><Label htmlFor="gp">Valor</Label><CurrencyInput id="gp" required value={price} onChange={setPrice} placeholder="R$ 0,00" /></div>
           <div><Label htmlFor="gi">URL da imagem (opcional)</Label><Input id="gi" type="url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…" /></div>
           <div><Label htmlFor="gd">Descrição (opcional)</Label><Textarea id="gd" value={description} onChange={(e) => setDescription(e.target.value)} /></div>
           <Button type="submit" variant="gold" className="w-full" disabled={pending}>{pending ? "Salvando…" : "Salvar"}</Button>

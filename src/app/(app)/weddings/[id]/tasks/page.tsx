@@ -8,6 +8,7 @@ import { Input, Textarea, Select, Label } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DatePicker } from "@/components/ui/date-picker";
 import { cn } from "@/lib/utils";
 import { TaskStatus } from "@/lib/validation/enums";
 import { TASK_STATUS_ORDER, TASK_STATUS_META, dueStatus, type DueStatus } from "@/lib/tasks";
@@ -270,7 +271,9 @@ function TaskDialog({
   const [description, setDescription] = useState(editing?.description ?? "");
   const [category, setCategory] = useState(editing?.category ?? "");
   const [status, setStatus] = useState<Task["status"]>(editing?.status ?? "PENDING");
-  const [dueDate, setDueDate] = useState(editing?.dueDate ? editing.dueDate.slice(0, 10) : "");
+  const [dueDate, setDueDate] = useState<Date | undefined>(
+    editing?.dueDate ? new Date(editing.dueDate) : undefined
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -292,7 +295,10 @@ function TaskDialog({
           <div><Label htmlFor="tt">Título</Label><Input id="tt" required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex.: Fechar contrato do buffet" /></div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label htmlFor="tc">Categoria</Label><Input id="tc" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Ex.: Fornecedores" /></div>
-            <div><Label htmlFor="td">Vencimento</Label><Input id="td" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
+            <div>
+              <Label>Vencimento</Label>
+              <DatePicker value={dueDate} onChange={setDueDate} />
+            </div>
           </div>
           <div><Label htmlFor="ts">Status</Label>
             <Select id="ts" value={status} onChange={(e) => setStatus(e.target.value as Task["status"])}>
