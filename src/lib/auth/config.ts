@@ -38,6 +38,8 @@ export const authConfig: NextAuthConfig = {
         const { email, password } = parsed.data;
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user?.password) return null;
+        // Bloqueio administrativo: nega autenticação antes de validar a senha.
+        if (user.isBlocked) return null;
         const ok = await verifyPassword(user.password, password);
         if (!ok) return null;
         return { id: user.id, email: user.email, name: user.name ?? undefined };
@@ -50,6 +52,16 @@ export const authConfig: NextAuthConfig = {
     },
   },
   callbacks: {
+    // Trava de bloqueio também no fluxo OAuth (Google): usuário bloqueado
+    // não autentica por nenhum provedor.
+    async signIn({ user }) {
+      if (!user?.email) return true;
+      const found = await prisma.user.findUnique({
+        where: { email: user.email },
+        select: { isBlocked: true },
+      });
+      return !found?.isBlocked;
+    },
     jwt({ token, user }) {
       if (user) token.id = user.id;
       return token;

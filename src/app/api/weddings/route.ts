@@ -7,6 +7,7 @@ import {
 } from "@/lib/auth/guards";
 import { WeddingCreateSchema } from "@/lib/validation/schemas";
 import { canCreateWedding } from "@/lib/permissions";
+import { logSystemEvent } from "@/lib/system-log";
 
 export async function GET() {
   try {
@@ -42,6 +43,11 @@ export async function POST(req: Request) {
     const created = await prisma.wedding.create({
       data: { ...data, workspaceId },
     });
+    await logSystemEvent(
+      "wedding.create",
+      `Casamento "${created.title}" criado`,
+      userId,
+    );
     return Response.json(created, { status: 201 });
   } catch (e) {
     return errorResponse(e);

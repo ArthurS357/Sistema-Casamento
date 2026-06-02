@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { RsvpStatus, TableShape, RelType, ExpenseCategory, TaskStatus } from "./enums";
+import { RsvpStatus, TableShape, RelType, ExpenseCategory, TaskStatus, AnnouncementType } from "./enums";
+import { PLANS } from "@/lib/plans";
 
 const cuid = z.string().min(20).max(40);
 const nonEmpty = z.string().trim().min(1).max(200);
@@ -118,6 +119,29 @@ export const RsvpPublicSchema = z.object({
   companions: z.number().int().nonnegative().optional(),
   dietaryRestrictions: z.string().trim().max(500).optional().or(z.literal("").transform(() => undefined)),
 });
+
+// ─── Backoffice / Admin ────────────────────────────────────────
+
+export const AnnouncementCreateSchema = z.object({
+  title: nonEmpty,
+  message: z.string().trim().min(1).max(1000),
+  type: AnnouncementType.default("INFO"),
+  isActive: z.boolean().default(false),
+});
+export type AnnouncementCreateInput = z.infer<typeof AnnouncementCreateSchema>;
+
+export const AnnouncementUpdateSchema = z.object({
+  isActive: z.boolean(),
+});
+
+// Ações administrativas sobre um usuário (PATCH /api/admin/users).
+// Discriminated union: cada ação carrega só o payload que precisa.
+export const AdminUserActionSchema = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("setPlan"), plan: z.enum(PLANS) }),
+  z.object({ action: z.literal("setBlocked"), isBlocked: z.boolean() }),
+  z.object({ action: z.literal("resetPassword") }),
+]);
+export type AdminUserAction = z.infer<typeof AdminUserActionSchema>;
 
 export const RelationshipCreateSchema = z
   .object({

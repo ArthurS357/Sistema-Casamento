@@ -19,6 +19,7 @@ model User {
   image       String?
   role        String       @default("couple")   // papel global do produto
   systemRole  String       @default("user")    // user | admin (acesso ao painel de sistema)
+  isBlocked   Boolean      @default(false)      // bloqueio administrativo: nega login
   memberships Membership[]
   accounts    Account[]
   sessions    Session[]
@@ -64,6 +65,33 @@ model ProcessedStripeEvent {
   id        String   @id
   type      String
   createdAt DateTime @default(now())
+}
+
+// ─── Backoffice / Sistema ──────────────────────────────────────
+// Anúncios globais exibidos no topo da app (banner). type segue
+// AnnouncementType (ver src/lib/validation/enums.ts): INFO | WARNING.
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  type      String   @default("INFO") // INFO | WARNING
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([isActive])
+}
+
+// Trilha de auditoria do sistema. userId mantido como string solta
+// (sem FK) de propósito: sobrevive à anonimização do usuário.
+model SystemLog {
+  id        String   @id @default(cuid())
+  action    String // ex: "wedding.create", "user.block", "announcement.create"
+  details   String? // descrição legível: "Usuário X criou Casamento Y"
+  userId    String? // ator/sujeito do evento (opcional)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId])
 }
 
 // ─── Tenant (Multi-tenant B2B) ─────────────────────────────────

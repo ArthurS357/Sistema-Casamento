@@ -24,3 +24,6 @@ export type ExpenseCategory = z.infer<typeof ExpenseCategory>;
 
 export const TaskStatus = z.enum(["PENDING", "IN_PROGRESS", "COMPLETED"]);
 export type TaskStatus = z.infer<typeof TaskStatus>;
+
+export const AnnouncementType = z.enum(["INFO", "WARNING"]);
+export type AnnouncementType = z.infer<typeof AnnouncementType>;
