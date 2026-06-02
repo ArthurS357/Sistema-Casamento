@@ -4,13 +4,27 @@ import { PLANS } from "@/lib/plans";
 
 const cuid = z.string().min(20).max(40);
 const nonEmpty = z.string().trim().min(1).max(200);
-const emailOpt = z
-  .string()
-  .trim()
-  .toLowerCase()
-  .email()
+
+/**
+ * E-mail canônico: sanitiza ANTES de validar (`.trim().toLowerCase()` então
+ * `.email()`). Fonte única para todos os schemas que recebem e-mail — garante
+ * que "Joao@Email.com " e "joao@email.com" virem o mesmo valor no banco,
+ * evitando contas duplicadas e falhas de login por case/whitespace.
+ */
+export const email = z.string().trim().toLowerCase().email();
+
+const emailOpt = email
   .optional()
   .or(z.literal("").transform(() => undefined));
+
+/**
+ * Honeypot anti-bot: campo invisível ao humano. Só aceita vazio/ausente;
+ * qualquer valor (bot preenche tudo) reprova a validação.
+ */
+export const honeypot = z
+  .string()
+  .max(0, "Falha na verificação anti-spam.")
+  .optional();
 const phoneOpt = z.string().trim().max(40).optional().or(z.literal("").transform(() => undefined));
 const cents = z.number().int().nonnegative().max(1_000_000_000);
 const pixKeyOpt = z
@@ -29,16 +43,18 @@ const urlOpt = z
 
 export const RegisterSchema = z.object({
   name: nonEmpty,
-  email: z.string().trim().toLowerCase().email(),
+  email,
   password: z.string().min(8).max(200),
   termsAccepted: z.boolean().refine((val) => val === true, {
     message: "Você precisa aceitar os termos para continuar",
   }),
+  // Honeypot: humano nunca preenche (campo escondido no form). Bot preenche → reprova.
+  website: honeypot,
 });
 export type RegisterInput = z.infer<typeof RegisterSchema>;
 
 export const WorkspaceMemberInviteSchema = z.object({
-  email: z.string().trim().toLowerCase().email(),
+  email,
 });
 export type WorkspaceMemberInviteInput = z.infer<typeof WorkspaceMemberInviteSchema>;
 

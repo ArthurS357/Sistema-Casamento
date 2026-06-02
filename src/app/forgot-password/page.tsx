@@ -5,6 +5,7 @@ import { Mail, ArrowLeft, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { AuthShell } from "@/components/auth/auth-shell";
+import { RATE_LIMIT_MESSAGE } from "@/lib/api";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -22,6 +23,7 @@ export default function ForgotPasswordPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ email }),
       });
+      if (res.status === 429) throw new Error(RATE_LIMIT_MESSAGE);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error ?? "Erro ao enviar.");

@@ -17,6 +17,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { RegisterSchema, type RegisterInput } from "@/lib/validation/schemas";
+import { RATE_LIMIT_MESSAGE } from "@/lib/api";
 
 type ModalType = "terms" | "privacy" | null;
 
@@ -32,7 +33,7 @@ export default function RegisterPage() {
     formState: { errors, isSubmitting },
   } = useForm<RegisterInput>({
     resolver: zodResolver(RegisterSchema),
-    defaultValues: { name: "", email: "", password: "", termsAccepted: false },
+    defaultValues: { name: "", email: "", password: "", termsAccepted: false, website: "" },
     mode: "onTouched",
   });
 
@@ -45,6 +46,10 @@ export default function RegisterPage() {
       headers: { "content-type": "application/json" },
       body: JSON.stringify(values),
     });
+    if (res.status === 429) {
+      setServerErr(RATE_LIMIT_MESSAGE);
+      return;
+    }
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       setServerErr(body.error === "EmailTaken" ? "Email já cadastrado." : "Erro ao registrar.");
@@ -68,6 +73,17 @@ export default function RegisterPage() {
       }
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+        {/* Honeypot anti-bot: off-screen + opacity-0 (não display:none, p/ enganar bots).
+            aria-hidden + tabIndex -1 + autoComplete off escondem de humanos e leitores de tela.
+            Humano nunca preenche; bot preenche tudo → RegisterSchema reprova. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute left-[-9999px] top-0 h-0 w-0 overflow-hidden opacity-0"
+        >
+          <label htmlFor="website">Não preencha este campo</label>
+          <input id="website" type="text" tabIndex={-1} autoComplete="off" {...register("website")} />
+        </div>
+
         <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both duration-500" style={{ animationDelay: "100ms" }}>
           <Label htmlFor="name">Nome</Label>
           <Input id="name" aria-invalid={!!errors.name} {...register("name")} />

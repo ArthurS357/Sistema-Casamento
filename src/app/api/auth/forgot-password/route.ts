@@ -2,11 +2,10 @@ import { prisma } from "@/lib/db";
 import { sendPasswordResetEmail } from "@/lib/mail";
 import { errorResponse } from "@/lib/auth/guards";
 import { authLimiter, enforceRateLimit } from "@/lib/rate-limit";
+import { email } from "@/lib/validation/schemas";
 import { z } from "zod";
 
-const schema = z.object({
-  email: z.string().email().trim().toLowerCase(),
-});
+const schema = z.object({ email });
 
 /** POST /api/auth/forgot-password — gera token de 1h e envia e-mail */
 export async function POST(req: Request) {

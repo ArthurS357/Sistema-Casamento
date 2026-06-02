@@ -7,10 +7,11 @@ import { verifyPassword } from "@/lib/auth/password";
 import { ensurePersonalWorkspace } from "@/lib/workspace";
 import { authLimiter, checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { evaluateSoftDelete } from "@/lib/auth/soft-delete";
+import { email } from "@/lib/validation/schemas";
 import { z } from "zod";
 
 const credSchema = z.object({
-  email: z.string().email().trim().toLowerCase(),
+  email,
   password: z.string().min(8).max(200),
   totpCode: z.string().length(6).optional(),
 });

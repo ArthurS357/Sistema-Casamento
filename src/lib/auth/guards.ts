@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canAccessPremiumFeatures } from "@/lib/permissions";
+import { enforceRateLimitFor, limiterForTier, type RateTier } from "@/lib/rate-limit";
 
 export class AuthError extends Error {
   constructor(public status: number, message: string) {
@@ -74,6 +75,46 @@ export async function getActiveWorkspaceId(userId: string): Promise<string> {
   });
   if (!m) throw new AuthError(403, "No workspace");
   return m.workspaceId;
+}
+
+/**
+ * Resolve o tier de rate limit do usuário: admin do sistema > plano do
+ * workspace ativo (pessoal). Decisão de cota → lê o banco, não confia no JWT.
+ */
+async function resolveUserTier(userId: string): Promise<RateTier> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { systemRole: true },
+  });
+  if (user?.systemRole === "admin") return "admin";
+
+  const membership = await prisma.membership.findFirst({
+    where: { userId },
+    orderBy: { createdAt: "asc" },
+    select: { workspace: { select: { plan: true } } },
+  });
+  const plan = membership?.workspace.plan;
+  if (plan === "gestor") return "gestor";
+  if (plan === "pro") return "pro";
+  return "free";
+}
+
+/**
+ * Rate limit tiered para rotas autenticadas pesadas. Chaveia por userId e
+ * aplica a cota do plano (Free/Pro/Gestor/Admin). Retorna uma `Response` 429
+ * quando estoura, ou `null` para seguir o handler.
+ *
+ * @example
+ *   const userId = await requireUserId();
+ *   const limited = await enforceUserRateLimit(userId, "extract");
+ *   if (limited) return limited;
+ */
+export async function enforceUserRateLimit(
+  userId: string,
+  scope: string,
+): Promise<Response | null> {
+  const tier = await resolveUserTier(userId);
+  return enforceRateLimitFor(userId, limiterForTier(tier), scope);
 }
 
 export function errorResponse(e: unknown): Response {

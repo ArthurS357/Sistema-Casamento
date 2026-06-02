@@ -1,12 +1,15 @@
 import { prisma } from "@/lib/db";
-import { requireWeddingAccess, errorResponse } from "@/lib/auth/guards";
+import { requireWeddingAccess, enforceUserRateLimit, errorResponse } from "@/lib/auth/guards";
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function GET(_req: Request, { params }: Params) {
   try {
     const { id } = await params;
-    await requireWeddingAccess(id);
+    const userId = await requireWeddingAccess(id);
+    // Agregação de relatório é pesada: cota por plano por usuário.
+    const limited = await enforceUserRateLimit(userId, "reports");
+    if (limited) return limited;
 
     const [wedding, expenses, guests] = await Promise.all([
       prisma.wedding.findUnique({ where: { id }, select: { budgetTotal: true, title: true, date: true } }),

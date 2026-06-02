@@ -1,9 +1,12 @@
 import { prisma } from "@/lib/db";
-import { requireUserId, errorResponse } from "@/lib/auth/guards";
+import { requireUserId, enforceUserRateLimit, errorResponse } from "@/lib/auth/guards";
 
 export async function GET() {
   try {
     const userId = await requireUserId();
+    // Export completo é pesado: aplica cota por plano para conter abuso.
+    const limited = await enforceUserRateLimit(userId, "extract");
+    if (limited) return limited;
     const user = await prisma.user.findUniqueOrThrow({
       where: { id: userId },
       select: {
