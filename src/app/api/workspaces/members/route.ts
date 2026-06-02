@@ -7,6 +7,7 @@ import {
 } from "@/lib/auth/guards";
 import { WorkspaceMemberInviteSchema } from "@/lib/validation/schemas";
 import { canAddWorkspaceMember, maxWorkspaceMembers } from "@/lib/permissions";
+import { sendWorkspaceInviteEmail } from "@/lib/mail";
 
 /** Garante que o usuário é owner/admin do workspace (pode gerir membros). */
 async function requireManager(userId: string, workspaceId: string): Promise<void> {
@@ -62,7 +63,7 @@ export async function POST(req: Request) {
 
     const ws = await prisma.workspace.findUniqueOrThrow({
       where: { id: workspaceId },
-      select: { plan: true, _count: { select: { memberships: true } } },
+      select: { plan: true, name: true, _count: { select: { memberships: true } } },
     });
 
     // Paywall: Free só permite o dono; Pro libera 1 membro extra (2 no total).
@@ -75,7 +76,7 @@ export async function POST(req: Request) {
 
     const invitee = await prisma.user.findUnique({
       where: { email },
-      select: { id: true },
+      select: { id: true, name: true, email: true },
     });
     if (!invitee) {
       throw new AuthError(404, "Nenhuma conta encontrada com esse e-mail. Peça para a pessoa se cadastrar primeiro.");
@@ -97,6 +98,18 @@ export async function POST(req: Request) {
         createdAt: true,
         user: { select: { id: true, name: true, email: true } },
       },
+    });
+
+    // Notificação graciosa: nunca quebra o convite se o e-mail falhar.
+    const inviter = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true },
+    });
+    await sendWorkspaceInviteEmail({
+      to: invitee.email,
+      inviteeName: invitee.name ?? undefined,
+      inviterName: inviter?.name ?? "Um membro do Atelier do Sim",
+      workspaceName: ws.name,
     });
 
     return Response.json(member, { status: 201 });
