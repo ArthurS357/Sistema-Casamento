@@ -1,6 +1,9 @@
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // Pooled (PgBouncer) p/ runtime serverless; directUrl usa a conexão
+  // direta do Neon para migrations/introspection. Best practice Vercel+Neon.
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 generator client {
