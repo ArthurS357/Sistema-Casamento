@@ -3,16 +3,25 @@ import { stripe, planForPriceId } from "@/lib/stripe";
 import { prisma } from "@/lib/db";
 import { isPaidPlan } from "@/lib/plans";
 
+// Webhook precisa do raw body e nunca pode ser cacheado pelo App Router.
+export const dynamic = "force-dynamic";
+
 export async function POST(req: Request) {
   const sig = req.headers.get("stripe-signature");
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!sig || !secret) return new Response("Missing signature", { status: 400 });
+  if (!sig || !secret) {
+    console.error("[stripe-webhook] assinatura/segredo ausente — request rejeitada");
+    return new Response("Missing signature", { status: 400 });
+  }
 
   const body = await req.text();
   let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(body, sig, secret);
-  } catch {
+  } catch (err) {
+    // Auditoria: assinatura inválida pode indicar replay/forja. Loga e barra.
+    const reason = err instanceof Error ? err.message : "unknown";
+    console.error(`[stripe-webhook] assinatura inválida: ${reason}`);
     return new Response("Invalid signature", { status: 400 });
   }
 
@@ -28,7 +37,8 @@ export async function POST(req: Request) {
     switch (event.type) {
       case "checkout.session.completed": {
         const s = event.data.object as Stripe.Checkout.Session;
-        const workspaceId = s.metadata?.workspaceId;
+        // workspaceId/plan vêm do metadata; client_reference_id é fallback.
+        const workspaceId = s.metadata?.workspaceId ?? s.client_reference_id ?? undefined;
         const plan = s.metadata?.plan;
         if (workspaceId && plan && isPaidPlan(plan)) {
           await prisma.workspace.update({
@@ -40,6 +50,12 @@ export async function POST(req: Request) {
                 typeof s.subscription === "string" ? s.subscription : undefined,
             },
           });
+          console.info(`[stripe-webhook] workspace ${workspaceId} → plano ${plan}`);
+        } else {
+          // Auditoria: pagamento sem metadata utilizável não atualiza nada.
+          console.warn(
+            `[stripe-webhook] checkout ${event.id} sem workspaceId/plan válidos — ignorado`,
+          );
         }
         break;
       }
@@ -55,7 +71,10 @@ export async function POST(req: Request) {
         break;
       }
     }
-  } catch {
+  } catch (err) {
+    // Falha no handler: libera o registro de idempotência p/ o Stripe reenviar.
+    const reason = err instanceof Error ? err.message : "unknown";
+    console.error(`[stripe-webhook] handler falhou (${event.type}): ${reason}`);
     await prisma.processedStripeEvent
       .delete({ where: { id: event.id } })
       .catch(() => {});
