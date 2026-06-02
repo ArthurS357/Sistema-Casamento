@@ -7,7 +7,7 @@ import { CookieConsentBanner } from "@/components/layout/cookie-consent-banner";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-display" });
 
-const APP_NAME = "Casamento.app";
+const APP_NAME = "Atelier do Sim";
 const APP_URL = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
 const APP_DESCRIPTION =
   "Plataforma completa para noivos: gestão financeira do casamento, lista de presentes via PIX e site dos noivos com RSVP.";

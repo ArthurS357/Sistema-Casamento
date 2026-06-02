@@ -28,7 +28,7 @@ export function AuthShell({ title, subtitle, children, footer }: AuthShellProps)
 
       <section className="w-full max-w-md rounded-2xl border border-white/50 bg-white/80 p-8 shadow-xl backdrop-blur-md sm:p-10 animate-in fade-in slide-in-from-bottom-4 fill-mode-both duration-500 ease-out">
         <header className="mb-8 text-center flex flex-col items-center">
-          <Image src="/android-chrome-192x192.png" alt="Casamento.app Logo" width={48} height={48} className="mb-4 h-12 w-12 object-contain" priority />
+          <Image src="/android-chrome-192x192.png" alt="Atelier do Sim Logo" width={48} height={48} className="mb-4 h-12 w-auto object-contain" priority />
           <h1 className="font-display text-3xl font-semibold tracking-tight text-slate-900">{title}</h1>
           {subtitle && <p className="mt-2 text-sm text-slate-500">{subtitle}</p>}
         </header>

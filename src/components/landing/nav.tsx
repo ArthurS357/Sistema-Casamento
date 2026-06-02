@@ -73,15 +73,15 @@ export function LandingNav() {
           className="flex items-center gap-2 font-display text-lg text-slate-900"
           onClick={closeMenu}
         >
-          <Image src="/android-chrome-192x192.png" alt="Casamento.app Logo" width={32} height={32} className="h-8 w-8 object-contain" priority />
-          Casamento.app
+          <Image src="/android-chrome-192x192.png" alt="Atelier do Sim Logo" width={32} height={32} className="h-8 w-auto object-contain" priority />
+          Atelier do Sim
         </Link>
 
         {/* Typewriter — mobile only */}
         <span
           className="block text-xs font-medium text-gold-700 md:hidden min-w-0 truncate max-w-[140px] sm:max-w-[200px]"
           aria-live="polite"
-          aria-label="Funcionalidades do Atelier"
+          aria-label="Funcionalidades do Atelier do Sim"
         >
           {typewriterText}
           <span className="inline-block w-[2px] h-3.5 bg-gold-500 ml-0.5 animate-pulse align-text-bottom" />

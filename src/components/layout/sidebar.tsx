@@ -70,8 +70,8 @@ export function Sidebar() {
       >
         <div className="p-5 border-b border-slate-100">
           <Link href="/dashboard" className="flex items-center gap-2 font-display text-xl">
-            <Image src="/android-chrome-192x192.png" alt="Casamento.app Logo" width={28} height={28} className="h-7 w-7 object-contain" priority />
-            Casamento.app
+            <Image src="/android-chrome-192x192.png" alt="Atelier do Sim Logo" width={28} height={28} className="h-7 w-auto object-contain" priority />
+            Atelier do Sim
           </Link>
         </div>
         <nav className="flex-1 p-3 space-y-6 overflow-y-auto">

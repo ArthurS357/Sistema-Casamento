@@ -23,7 +23,7 @@ const plans: PlanCard[] = [
   {
     id: "free",
     name: "Free",
-    price: "R$ 0,00",
+    price: "0,00",
     cadence: "para sempre",
     audience: "Para experimentar",
     tagline: "O básico para testar e organizar os primeiros passos.",
@@ -39,7 +39,7 @@ const plans: PlanCard[] = [
   {
     id: "pro",
     name: "Pro",
-    price: "R$ 40,00",
+    price: "40,00",
     cadence: "por mês",
     audience: "Para casais",
     tagline: "Tudo para os noivos planejarem um casamento sem estresse.",
@@ -57,7 +57,7 @@ const plans: PlanCard[] = [
   {
     id: "gestor",
     name: "Gestor",
-    price: "R$ 80,00",
+    price: "80,00",
     cadence: "por mês",
     audience: "Para assessorias",
     tagline: "Para profissionais que gerenciam vários casamentos ao mesmo tempo.",
@@ -107,7 +107,7 @@ export function LandingPricing() {
                 BASE,
                 visible,
                 "hover:duration-150",
-                "relative flex flex-col rounded-3xl border bg-white p-8 shadow-sm hover:scale-[1.02] hover:ring-2 hover:ring-offset-2 hover:ring-gold-300 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-gold-400 cursor-pointer",
+                "group relative flex flex-col rounded-3xl border bg-white p-8 shadow-sm hover:scale-[1.02] hover:ring-2 hover:ring-offset-2 hover:ring-gold-300 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-gold-400 cursor-pointer",
                 plan.featured
                   ? "border-gold-300 ring-1 ring-gold-200 md:-translate-y-2"
                   : "border-slate-200",
@@ -126,7 +126,14 @@ export function LandingPricing() {
               <p className="mt-1 text-sm text-slate-500">{plan.tagline}</p>
 
               <div className="mt-6 flex items-baseline gap-1.5">
-                <span className="font-display text-4xl text-slate-900">{plan.price}</span>
+                <span className="font-display text-4xl text-slate-900">
+                  <span className="sr-only">{`R$ ${plan.price}`}</span>
+                  <span aria-hidden="true">
+                    <span className="group-hover:hidden">R$</span>
+                    <span className="hidden group-hover:inline">RS</span>{" "}
+                    {plan.price}
+                  </span>
+                </span>
                 <span className="text-sm text-slate-500">/ {plan.cadence}</span>
               </div>
 

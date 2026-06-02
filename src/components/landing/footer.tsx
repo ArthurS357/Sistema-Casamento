@@ -10,7 +10,7 @@ export function LandingFooter() {
             <span className="grid h-8 w-8 place-items-center rounded-full bg-gold-400 text-slate-900">
               <Heart className="h-4 w-4" aria-hidden />
             </span>
-            Atelier
+            Atelier do Sim
           </Link>
           <p className="mt-3 max-w-xs text-sm text-slate-500">
             Planejamento de casamentos, do primeiro convidado ao último brinde.
@@ -35,7 +35,7 @@ export function LandingFooter() {
 
       <div className="border-t border-slate-100 py-5">
         <p className="mx-auto max-w-6xl px-6 text-xs text-slate-400">
-          © {new Date().getFullYear()} Atelier. Todos os direitos reservados.
+          © {new Date().getFullYear()} Atelier do Sim. Todos os direitos reservados.
         </p>
       </div>
     </footer>

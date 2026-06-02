@@ -3,9 +3,9 @@ import Link from "next/link";
 import { LegalLayout, LegalSection, LegalList } from "@/components/legal/legal-layout";
 
 export const metadata: Metadata = {
-  title: "Política de Privacidade — Atelier",
+  title: "Política de Privacidade — Atelier do Sim",
   description:
-    "Como o Atelier trata dados de noivos, assessores e convidados em conformidade com a LGPD.",
+    "Como o Atelier do Sim trata dados de noivos, assessores e convidados em conformidade com a LGPD.",
 };
 
 const LAST_UPDATED = "31 de maio de 2026";
@@ -14,12 +14,12 @@ export default function PrivacyPage() {
   return (
     <LegalLayout
       title="Política de Privacidade"
-      intro="Esta política explica como o Atelier coleta, usa, compartilha e protege dados pessoais, em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018 — LGPD)."
+      intro="Esta política explica como o Atelier do Sim coleta, usa, compartilha e protege dados pessoais, em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018 — LGPD)."
       lastUpdated={LAST_UPDATED}
     >
       <LegalSection title="1. Quem somos e nossos papéis">
         <p>
-          O Atelier é uma plataforma SaaS de planejamento de casamentos. Para fins da LGPD,
+          O Atelier do Sim é uma plataforma SaaS de planejamento de casamentos. Para fins da LGPD,
           atuamos em dois papéis distintos:
         </p>
         <LegalList

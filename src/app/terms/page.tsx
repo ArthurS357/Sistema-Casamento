@@ -3,9 +3,9 @@ import Link from "next/link";
 import { LegalLayout, LegalSection, LegalList } from "@/components/legal/legal-layout";
 
 export const metadata: Metadata = {
-  title: "Termos de Uso — Atelier",
+  title: "Termos de Uso — Atelier do Sim",
   description:
-    "Condições de uso da plataforma Atelier: responsabilidades, assinatura, cancelamento e limitações.",
+    "Condições de uso da plataforma Atelier do Sim: responsabilidades, assinatura, cancelamento e limitações.",
 };
 
 const LAST_UPDATED = "31 de maio de 2026";
@@ -14,12 +14,12 @@ export default function TermsPage() {
   return (
     <LegalLayout
       title="Termos de Uso"
-      intro="Estes Termos regem o uso da plataforma Atelier. Ao criar uma conta ou utilizar o serviço, você concorda com as condições abaixo."
+      intro="Estes Termos regem o uso da plataforma Atelier do Sim. Ao criar uma conta ou utilizar o serviço, você concorda com as condições abaixo."
       lastUpdated={LAST_UPDATED}
     >
       <LegalSection title="1. Aceitação dos termos">
         <p>
-          Ao se cadastrar ou utilizar o Atelier, você declara ter lido e concordado com estes
+          Ao se cadastrar ou utilizar o Atelier do Sim, você declara ter lido e concordado com estes
           Termos de Uso e com nossa{" "}
           <Link href="/privacy" className="font-medium text-gold-700 underline-offset-2 hover:underline">
             Política de Privacidade
@@ -30,7 +30,7 @@ export default function TermsPage() {
 
       <LegalSection title="2. Descrição do serviço">
         <p>
-          O Atelier é uma ferramenta de planejamento de casamentos que permite gerenciar lista
+          O Atelier do Sim é uma ferramenta de planejamento de casamentos que permite gerenciar lista
           de convidados, confirmações de presença (RSVP), orçamento, mesas e assentos. O serviço
           é oferecido em um plano gratuito e em planos pagos (Pro e Gestor) por assinatura.
         </p>
@@ -50,14 +50,14 @@ export default function TermsPage() {
       <LegalSection title="4. Conteúdo do usuário e responsabilidades">
         <p>
           Você mantém a titularidade de todo o conteúdo que insere — incluindo fotos, dados de
-          convidados e informações do evento. Ao usar o Atelier, você declara e garante que:
+          convidados e informações do evento. Ao usar o Atelier do Sim, você declara e garante que:
         </p>
         <LegalList
           items={[
             "Possui o direito de inserir e tratar os dados dos convidados que cadastra;",
             "Obteve, quando aplicável, o consentimento dos titulares para tratar dados sensíveis (como restrições alimentares que revelem condição de saúde);",
             "Não publicará conteúdo ilegal, ofensivo ou que viole direitos de terceiros;",
-            "É o controlador dos dados dos convidados, sendo o Atelier mero operador que age sob sua instrução.",
+            "É o controlador dos dados dos convidados, sendo o Atelier do Sim mero operador que age sob sua instrução.",
           ]}
         />
         <p>
@@ -92,7 +92,7 @@ export default function TermsPage() {
 
       <LegalSection title="7. Propriedade intelectual">
         <p>
-          A plataforma, sua marca, código e design são de titularidade do Atelier. Estes Termos
+          A plataforma, sua marca, código e design são de titularidade do Atelier do Sim. Estes Termos
           não transferem a você nenhum direito sobre a propriedade intelectual da plataforma,
           exceto o direito de uso conforme aqui descrito.
         </p>
