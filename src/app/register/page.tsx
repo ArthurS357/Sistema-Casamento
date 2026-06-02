@@ -9,11 +9,22 @@ import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AuthShell } from "@/components/auth/auth-shell";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { RegisterSchema, type RegisterInput } from "@/lib/validation/schemas";
+
+type ModalType = "terms" | "privacy" | null;
 
 export default function RegisterPage() {
   const router = useRouter();
   const [serverErr, setServerErr] = useState<string | null>(null);
+  const [openModal, setOpenModal] = useState<ModalType>(null);
+
   const {
     register,
     handleSubmit,
@@ -80,13 +91,21 @@ export default function RegisterPage() {
             <Checkbox id="termsAccepted" aria-invalid={!!errors.termsAccepted} {...register("termsAccepted")} />
             <span className="leading-snug">
               Aceito os{" "}
-              <Link href="/terms" target="_blank" className="font-medium text-gold-500 hover:underline">
+              <button
+                type="button"
+                onClick={() => setOpenModal("terms")}
+                className="font-medium text-gold-500 hover:underline cursor-pointer"
+              >
                 Termos de Uso
-              </Link>{" "}
+              </button>{" "}
               e a{" "}
-              <Link href="/privacy" target="_blank" className="font-medium text-gold-500 hover:underline">
+              <button
+                type="button"
+                onClick={() => setOpenModal("privacy")}
+                className="font-medium text-gold-500 hover:underline cursor-pointer"
+              >
                 Política de Privacidade
-              </Link>
+              </button>
             </span>
           </label>
           {errors.termsAccepted && (
@@ -110,6 +129,122 @@ export default function RegisterPage() {
           {isSubmitting ? "Criando…" : "Criar conta"}
         </Button>
       </form>
+
+      {/* Modal: Termos de Uso */}
+      <Dialog open={openModal === "terms"} onOpenChange={(o) => !o && setOpenModal(null)}>
+        <DialogContent className="max-h-[80vh] overflow-y-auto max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Termos de Uso</DialogTitle>
+            <DialogDescription>Atualizado em 31 de maio de 2026</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 text-sm text-slate-700 leading-relaxed">
+            <Section title="E-mails que enviamos">
+              <p>
+                Enviamos e-mails <strong>exclusivamente</strong> para os seguintes fins:
+              </p>
+              <ul className="list-disc pl-5 space-y-1 mt-2">
+                <li>Avisos de vencimento ou renovação do seu plano de assinatura;</li>
+                <li>Relatórios específicos que você mesmo solicitou ou configurou dentro da plataforma;</li>
+                <li>E-mail de boas-vindas no momento do cadastro.</li>
+              </ul>
+              <p className="mt-2">
+                Não enviamos newsletters, promoções ou comunicações de marketing sem seu consentimento explícito.
+              </p>
+            </Section>
+
+            <Section title="Uso de Inteligência Artificial (IA)">
+              <p>
+                Nossa assistente <strong>Lia</strong> e outras funções baseadas em IA estão disponíveis de acordo com o seu plano:
+              </p>
+              <ul className="list-disc pl-5 space-y-1 mt-2">
+                <li><strong>Plano Free:</strong> sem acesso à IA;</li>
+                <li><strong>Plano Pro:</strong> acesso básico à Lia e sugestões automáticas;</li>
+                <li><strong>Plano Gestor:</strong> acesso completo a todas as funcionalidades de IA.</li>
+              </ul>
+              <p className="mt-2">
+                O uso de IA pode envolver o processamento de dados do seu evento para gerar sugestões. Você pode revogar esse consentimento a qualquer momento nas configurações de privacidade.
+              </p>
+            </Section>
+
+            <Section title="Cookies e persistência de sessão">
+              <p>
+                Utilizamos <strong>apenas cookies estritamente necessários</strong> para manter sua sessão autenticada de forma segura. Esses cookies:
+              </p>
+              <ul className="list-disc pl-5 space-y-1 mt-2">
+                <li>São criados no momento do login e expiram ao encerrar a sessão ou após período de inatividade;</li>
+                <li>Armazenam somente o token de autenticação, nunca dados sensíveis do evento;</li>
+                <li>Não são usados para rastreamento, publicidade ou análise de comportamento.</li>
+              </ul>
+            </Section>
+
+            <Section title="Cadastro e responsabilidades">
+              <p>Ao criar sua conta, você declara ser maior de 18 anos e concorda em fornecer informações verídicas. Você é responsável pela segurança das suas credenciais e por todas as atividades realizadas na conta.</p>
+            </Section>
+
+            <Section title="Assinatura e cancelamento">
+              <p>Planos pagos (Pro e Gestor) são cobrados por assinatura recorrente via Stripe. Você pode cancelar a qualquer momento; o acesso permanece até o fim do ciclo pago. Valores já cobrados pelo ciclo em curso não são reembolsados.</p>
+            </Section>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Política de Privacidade */}
+      <Dialog open={openModal === "privacy"} onOpenChange={(o) => !o && setOpenModal(null)}>
+        <DialogContent className="max-h-[80vh] overflow-y-auto max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Política de Privacidade</DialogTitle>
+            <DialogDescription>Atualizado em 31 de maio de 2026 · LGPD — Lei nº 13.709/2018</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 text-sm text-slate-700 leading-relaxed">
+            <Section title="Dados que coletamos">
+              <ul className="list-disc pl-5 space-y-1">
+                <li><strong>Conta:</strong> nome, e-mail e senha (armazenada com hash argon2id);</li>
+                <li><strong>Evento:</strong> dados dos convidados, orçamento e mesas inseridos por você;</li>
+                <li><strong>Técnicos:</strong> cookies de sessão estritamente necessários.</li>
+              </ul>
+            </Section>
+
+            <Section title="E-mails que enviamos">
+              <p>Enviamos e-mails <strong>somente</strong> para avisos de vencimento de plano e relatórios específicos que você configura. Não fazemos marketing sem consentimento.</p>
+            </Section>
+
+            <Section title="Uso de IA e dados processados">
+              <p>
+                Funções de IA (como a assistente Lia) processam dados do seu evento para gerar sugestões e relatórios. O nível de acesso varia conforme o plano. Você pode desativar esse processamento nas <strong>Configurações → Privacidade</strong>.
+              </p>
+            </Section>
+
+            <Section title="Cookies">
+              <p>
+                Usamos <strong>apenas cookies de sessão</strong>, necessários para manter você autenticado com segurança. Nenhum cookie de publicidade ou rastreamento de terceiros é utilizado.
+                <br />Os cookies são criados no login e expiram com a sessão ou após inatividade prolongada.
+              </p>
+            </Section>
+
+            <Section title="Seus direitos (Art. 18 LGPD)">
+              <ul className="list-disc pl-5 space-y-1">
+                <li>Acesso, correção e portabilidade dos seus dados;</li>
+                <li>Revogação de consentimento (IA) nas configurações;</li>
+                <li>Download do extrato completo dos seus dados via <strong>Configurações → Privacidade → Baixar Extrato</strong>;</li>
+                <li>Exclusão da conta e dos dados — contate <strong>privacidade@atelier.app</strong>.</li>
+              </ul>
+            </Section>
+
+            <Section title="Compartilhamento">
+              <p>Não vendemos dados. Compartilhamos apenas com operadores essenciais: Stripe (pagamentos) e Google (login OAuth opcional).</p>
+            </Section>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AuthShell>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <h3 className="font-semibold text-slate-900 mb-1">{title}</h3>
+      {children}
+    </div>
   );
 }

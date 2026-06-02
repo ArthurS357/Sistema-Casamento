@@ -20,6 +20,7 @@ model User {
   role        String       @default("couple")   // papel global do produto
   systemRole  String       @default("user")    // user | admin (acesso ao painel de sistema)
   isBlocked   Boolean      @default(false)      // bloqueio administrativo: nega login
+  aiConsent   Boolean      @default(true)       // consentimento LGPD para uso de IA (Lia)
   memberships Membership[]
   accounts    Account[]
   sessions    Session[]
