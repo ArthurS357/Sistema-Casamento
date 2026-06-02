@@ -129,8 +129,7 @@ export function LandingPricing() {
                 <span className="font-display text-4xl text-slate-900 antialiased transform-gpu">
                   <span className="sr-only">{`R$ ${plan.price}`}</span>
                   <span aria-hidden="true">
-                    R<span className="group-hover:hidden">$</span><span className="hidden group-hover:inline">S</span>{" "}
-                    {plan.price}
+                    R<span className="inline-block group-hover:hidden">$</span><span className="hidden group-hover:inline-block">S</span> {plan.price}
                   </span>
                 </span>
                 <span className="text-sm text-slate-500">/ {plan.cadence}</span>
