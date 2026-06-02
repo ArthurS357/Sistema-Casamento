@@ -21,3 +21,6 @@ export const ExpenseCategory = z.enum([
   "attire", "transport", "stationery", "favors", "other",
 ]);
 export type ExpenseCategory = z.infer<typeof ExpenseCategory>;
+
+export const TaskStatus = z.enum(["PENDING", "IN_PROGRESS", "COMPLETED"]);
+export type TaskStatus = z.infer<typeof TaskStatus>;

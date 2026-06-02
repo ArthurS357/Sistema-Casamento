@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { RsvpStatus, TableShape, RelType, ExpenseCategory } from "./enums";
+import { RsvpStatus, TableShape, RelType, ExpenseCategory, TaskStatus } from "./enums";
 
 const cuid = z.string().min(20).max(40);
 const nonEmpty = z.string().trim().min(1).max(200);
@@ -77,6 +77,15 @@ export const GiftCreateSchema = z.object({
   isPurchased: z.boolean().default(false),
 });
 export const GiftUpdateSchema = GiftCreateSchema.partial();
+
+export const TaskCreateSchema = z.object({
+  title: nonEmpty,
+  description: z.string().trim().max(2000).optional().or(z.literal("").transform(() => undefined)),
+  dueDate: z.coerce.date().nullable().optional(),
+  status: TaskStatus.default("PENDING"),
+  category: z.string().trim().max(60).optional().or(z.literal("").transform(() => undefined)),
+});
+export const TaskUpdateSchema = TaskCreateSchema.partial();
 
 export const TableCreateSchema = z.object({
   name: nonEmpty,

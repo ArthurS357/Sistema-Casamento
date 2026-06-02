@@ -11,7 +11,7 @@ export async function GET(_req: Request, { params }: Params) {
     const w = await prisma.wedding.findUnique({
       where: { id },
       include: {
-        _count: { select: { guests: true, expenses: true, tables: true, gifts: true } },
+        _count: { select: { guests: true, expenses: true, tables: true, gifts: true, tasks: true } },
       },
     });
     return Response.json(w);

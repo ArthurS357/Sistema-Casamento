@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useState } from "react";
 import {
-  LayoutDashboard, Wallet, Users, Armchair, BarChart3, Settings, LogOut, Menu, X, Heart, Gift,
+  LayoutDashboard, Wallet, Users, Armchair, BarChart3, Settings, LogOut, Menu, X, Heart, Gift, ListChecks,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +24,7 @@ export function Sidebar() {
   const weddingNav: NavItem[] = weddingId
     ? [
         { href: `/weddings/${weddingId}`, label: "Visão geral", icon: Heart },
+        { href: `/weddings/${weddingId}/tasks`, label: "Checklist", icon: ListChecks },
         { href: `/weddings/${weddingId}/budget`, label: "Orçamento", icon: Wallet },
         { href: `/weddings/${weddingId}/guests`, label: "Convidados", icon: Users },
         { href: `/weddings/${weddingId}/tables`, label: "Mesas", icon: Armchair },
