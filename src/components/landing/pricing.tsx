@@ -126,11 +126,10 @@ export function LandingPricing() {
               <p className="mt-1 text-sm text-slate-500">{plan.tagline}</p>
 
               <div className="mt-6 flex items-baseline gap-1.5">
-                <span className="font-display text-4xl text-slate-900">
+                <span className="font-display text-4xl text-slate-900 antialiased transform-gpu">
                   <span className="sr-only">{`R$ ${plan.price}`}</span>
                   <span aria-hidden="true">
-                    <span className="group-hover:hidden">R$</span>
-                    <span className="hidden group-hover:inline">RS</span>{" "}
+                    R<span className="group-hover:hidden">$</span><span className="hidden group-hover:inline">S</span>{" "}
                     {plan.price}
                   </span>
                 </span>
