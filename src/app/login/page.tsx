@@ -11,6 +11,8 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [totpCode, setTotpCode] = useState("");
+  const [needs2FA, setNeeds2FA] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -18,10 +20,25 @@ export default function LoginPage() {
     e.preventDefault();
     setErr(null);
     setLoading(true);
-    const res = await signIn("credentials", { email, password, redirect: false });
+    const res = await signIn("credentials", {
+      email,
+      password,
+      totpCode: needs2FA ? totpCode : undefined,
+      redirect: false,
+    });
     setLoading(false);
-    if (res?.error) setErr("Credenciais inválidas.");
-    else router.push("/dashboard");
+    if (res?.error) {
+      // Se credenciais corretas mas 2FA necessário, o authorize retorna null
+      // O usuário precisa digitar o código TOTP
+      if (!needs2FA) {
+        setNeeds2FA(true);
+        setErr("Conta com 2FA ativo. Digite o código do autenticador.");
+      } else {
+        setErr("Credenciais ou código 2FA inválidos.");
+      }
+    } else {
+      router.push("/dashboard");
+    }
   }
 
   return (
@@ -61,7 +78,29 @@ export default function LoginPage() {
         <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both duration-500" style={{ animationDelay: "300ms" }}>
           <Label htmlFor="password">Senha</Label>
           <Input id="password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} aria-invalid={!!err} />
+          <div className="mt-1.5 text-right">
+            <Link href="/forgot-password" className="text-xs text-gold-500 transition-colors hover:text-gold-600 hover:underline">
+              Esqueceu a senha?
+            </Link>
+          </div>
         </div>
+        {needs2FA && (
+          <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both duration-500">
+            <Label htmlFor="totpCode">Código 2FA</Label>
+            <Input
+              id="totpCode"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]{6}"
+              maxLength={6}
+              required
+              placeholder="000000"
+              value={totpCode}
+              onChange={(e) => setTotpCode(e.target.value)}
+              className="text-center tracking-[0.3em] text-lg font-mono"
+            />
+          </div>
+        )}
         {err && (
           <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600 animate-in fade-in slide-in-from-top-2" role="alert">
             {err}
@@ -80,3 +119,4 @@ export default function LoginPage() {
     </AuthShell>
   );
 }
+

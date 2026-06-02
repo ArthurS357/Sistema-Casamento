@@ -12,20 +12,24 @@ generator client {
 // Workspace (tenant). Um User acessa N workspaces via Membership.
 
 model User {
-  id          String       @id @default(cuid())
-  name        String?
-  email       String       @unique
-  password    String?
-  image       String?
-  role        String       @default("couple")   // papel global do produto
-  systemRole  String       @default("user")    // user | admin (acesso ao painel de sistema)
-  isBlocked   Boolean      @default(false)      // bloqueio administrativo: nega login
-  aiConsent   Boolean      @default(true)       // consentimento LGPD para uso de IA (Lia)
-  memberships Membership[]
-  accounts    Account[]
-  sessions    Session[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id                String       @id @default(cuid())
+  name              String?
+  email             String       @unique
+  password          String?
+  image             String?
+  role              String       @default("couple")   // papel global do produto
+  systemRole        String       @default("user")    // user | admin (acesso ao painel de sistema)
+  isBlocked         Boolean      @default(false)      // bloqueio administrativo: nega login
+  aiConsent         Boolean      @default(true)       // consentimento LGPD para uso de IA (Lia)
+  twoFactorSecret   String?                           // TOTP secret (Base32)
+  twoFactorEnabled  Boolean      @default(false)      // 2FA ativo?
+  deleteRequestedAt DateTime?                          // soft delete: data da solicitação
+  memberships       Membership[]
+  accounts          Account[]
+  sessions          Session[]
+  passwordResetTokens PasswordResetToken[]
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 }
 
 model Account {
@@ -60,6 +64,17 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model ProcessedStripeEvent {
