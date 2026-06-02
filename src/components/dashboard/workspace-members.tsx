@@ -55,36 +55,38 @@ export function WorkspaceMembers({ plan }: { plan: string }) {
   const canAdd = canAddWorkspaceMember(activePlan, members.length);
 
   return (
-    <Card className="bg-white/40 backdrop-blur-md border-white/40 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both">
-      <CardHeader className="flex flex-row items-center gap-2">
-        <Users className="h-5 w-5 text-slate-500" />
-        <CardTitle>Membros do Casamento</CardTitle>
+    <Card className="rounded-3xl bg-white/60 backdrop-blur-md border border-white/40 shadow-lg shadow-black/5 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both">
+      <CardHeader className="flex flex-row items-center gap-3 pb-2">
+        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-slate-100/80">
+          <Users className="h-4 w-4 text-slate-400" />
+        </div>
+        <CardTitle className="text-base font-semibold text-slate-700">Membros do Workspace</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm text-slate-600">
+      <CardContent className="space-y-4 pt-2">
+        <p className="text-sm text-slate-400">
           Convide seu parceiro(a) para gerenciar o casamento junto com você.
         </p>
 
         {isLoading ? (
           <div className="space-y-2">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full rounded-2xl" />
+            <Skeleton className="h-12 w-full rounded-2xl" />
           </div>
         ) : (
           <ul className="space-y-2">
             {members.map((m) => (
               <li
                 key={m.id}
-                className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2"
+                className="flex items-center justify-between rounded-2xl border border-white/60 bg-white/50 backdrop-blur-sm px-4 py-3 shadow-sm shadow-black/5"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-slate-900">
+                  <p className="truncate text-sm font-semibold text-slate-700">
                     {m.user.name || m.user.email}
                   </p>
-                  <p className="truncate text-xs text-slate-500">{m.user.email}</p>
+                  <p className="truncate text-xs text-slate-400">{m.user.email}</p>
                 </div>
                 {m.role === "owner" ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-gold-100 px-2 py-0.5 text-[11px] font-semibold text-gold-700">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-gold-100 px-2.5 py-0.5 text-[11px] font-semibold text-gold-700 shrink-0">
                     <Crown className="h-3 w-3" /> Dono
                   </span>
                 ) : (
@@ -92,7 +94,7 @@ export function WorkspaceMembers({ plan }: { plan: string }) {
                     type="button"
                     onClick={() => remove.mutate(m.id)}
                     disabled={remove.isPending}
-                    className="text-slate-400 hover:text-red-600 disabled:opacity-50"
+                    className="text-slate-300 hover:text-red-500 disabled:opacity-50 transition-colors shrink-0 ml-2"
                     aria-label={`Remover ${m.user.email}`}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -111,7 +113,7 @@ export function WorkspaceMembers({ plan }: { plan: string }) {
               if (email.trim()) add.mutate(email.trim());
             }}
           >
-            <Label htmlFor="member-email">E-mail do parceiro(a)</Label>
+            <Label htmlFor="member-email" className="text-slate-500">E-mail do parceiro(a)</Label>
             <div className="flex gap-2">
               <Input
                 id="member-email"
@@ -126,20 +128,20 @@ export function WorkspaceMembers({ plan }: { plan: string }) {
               </Button>
             </div>
             {add.isError && (
-              <p className="text-sm text-red-600">{(add.error as Error).message}</p>
+              <p className="text-sm text-red-500">{(add.error as Error).message}</p>
             )}
           </form>
         )}
 
         {!isLoading && !canAdd && activePlan === "free" && (
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-md border border-gold-300 bg-gold-50/60 p-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-gold-200 bg-gold-50/60 backdrop-blur-sm p-4">
             <div className="flex items-center gap-3">
-              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gold-200/50 text-gold-700">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-gold-100/80 text-gold-600">
                 <Lock className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm font-medium text-slate-900">Convide alguém para o seu time</p>
-                <p className="text-sm text-slate-600">
+                <p className="text-sm font-semibold text-slate-800">Convide alguém para o seu time</p>
+                <p className="text-sm text-slate-500">
                   No plano Pro você adiciona seu parceiro(a) para planejar a dois.
                 </p>
               </div>
@@ -151,7 +153,7 @@ export function WorkspaceMembers({ plan }: { plan: string }) {
         )}
 
         {!isLoading && !canAdd && activePlan !== "free" && (
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-400">
             Você atingiu o limite de membros do seu plano.
           </p>
         )}

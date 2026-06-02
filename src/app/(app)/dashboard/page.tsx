@@ -1,8 +1,9 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, CalendarDays, Wallet, Crown } from "lucide-react";
+import { Plus, CalendarDays, Wallet, Crown, Sparkles } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,12 +30,14 @@ interface Workspace {
 }
 
 export default function DashboardPage() {
+  const { data: session } = useSession();
   const qc = useQueryClient();
+
   const { data: workspace, isLoading: loadingWs } = useQuery<Workspace>({
     queryKey: ["workspace"],
     queryFn: () => apiFetch("/api/workspaces/active"),
   });
-  
+
   const { data: weddings, isLoading: loadingWeddings } = useQuery<Wedding[]>({
     queryKey: ["weddings"],
     queryFn: () => apiFetch("/api/weddings"),
@@ -69,18 +72,24 @@ export default function DashboardPage() {
   const isLoading = loadingWs || loadingWeddings;
   const plan = workspace?.plan || "free";
   const canCreate = !!weddings && canCreateWedding(plan, weddings.length);
+  const firstName = session?.user?.name?.split(" ")[0] ?? null;
 
   if (isLoading) {
     return (
-      <div className="max-w-6xl mx-auto space-y-6">
-        <Skeleton className="h-10 w-48 mb-6" />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="max-w-6xl mx-auto space-y-8 px-1">
+        <div className="space-y-2">
+          <Skeleton className="h-9 w-64 mb-1" />
+          <Skeleton className="h-5 w-80" />
+        </div>
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i}><CardContent className="space-y-3 pt-6">
-              <Skeleton className="h-6 w-2/3" />
-              <Skeleton className="h-4 w-1/2" />
-              <Skeleton className="h-4 w-1/3" />
-            </CardContent></Card>
+            <Card key={i} className="rounded-3xl">
+              <CardContent className="space-y-3 pt-6">
+                <Skeleton className="h-6 w-2/3" />
+                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-4 w-1/3" />
+              </CardContent>
+            </Card>
           ))}
         </div>
       </div>
@@ -88,17 +97,19 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-8 px-1">
+
+      {/* ── Upgrade Banner ── */}
       {requiresUpgradeBanner(plan) && (
-        <Card className="border-gold-300 bg-gold-50/60 backdrop-blur-md animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both">
+        <Card className="rounded-3xl border-gold-300 bg-gold-50/60 backdrop-blur-md shadow-lg shadow-black/5 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both">
           <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 gap-4">
             <div className="flex items-center gap-4">
-              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gold-200/50 text-gold-700">
+              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gold-200/50 text-gold-700">
                 <Crown className="h-6 w-6" />
               </div>
               <div>
                 <h3 className="font-display text-lg text-slate-900">Upgrade para o Pro</h3>
-                <p className="text-sm text-slate-600">Desbloqueie acesso total a convidados, RSVP e controle completo do grande dia.</p>
+                <p className="text-sm text-slate-500">Desbloqueie acesso total a convidados, RSVP e controle completo do grande dia.</p>
               </div>
             </div>
             <Link href="/pricing" className="w-full sm:w-auto shrink-0">
@@ -108,14 +119,75 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      <header className="flex items-center justify-between animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both" style={{ animationDelay: "100ms" }}>
-        <h1 className="font-display text-3xl text-slate-900">
-          {canManageMultipleWeddings(plan) ? "Meus Clientes / Casamentos" : "Seu Casamento"}
+      {/* ── Personalized Header ── */}
+      <header className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both" style={{ animationDelay: "80ms" }}>
+        <h1 className="font-display text-3xl sm:text-4xl text-slate-900 leading-tight">
+          {firstName ? (
+            <>Bem-vindo(a), {firstName} <Sparkles className="inline-block h-7 w-7 text-gold-400 mb-1" /></>
+          ) : (
+            <>Bem-vindo(a) <Sparkles className="inline-block h-7 w-7 text-gold-400 mb-1" /></>
+          )}
         </h1>
+        <p className="mt-1.5 text-base text-slate-400">
+          {canManageMultipleWeddings(plan)
+            ? "Gerencie seus clientes e casamentos em um só lugar."
+            : "Aqui está o resumo do seu casamento e atividades."}
+        </p>
+      </header>
+
+      {/* ── Section heading ── */}
+      <div
+        className="flex items-center justify-between animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both"
+        style={{ animationDelay: "160ms" }}
+      >
+        <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-400">
+          {canManageMultipleWeddings(plan) ? "Clientes / Casamentos" : "Seu Casamento"}
+        </h2>
+      </div>
+
+      {/* ── Wedding Grid ── */}
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        {weddings?.map((w, i) => (
+          <Link key={w.id} href={`/weddings/${w.id}`}>
+            <Card
+              className="rounded-3xl bg-white/60 backdrop-blur-md border border-white/40 shadow-lg shadow-black/5 hover:bg-white/75 hover:shadow-xl hover:shadow-black/8 hover:-translate-y-1 transition-all duration-200 cursor-pointer animate-in fade-in slide-in-from-bottom-4 ease-out fill-mode-both"
+              style={{ animationDelay: `${200 + i * 80}ms`, animationDuration: "500ms" }}
+            >
+              <CardContent className="space-y-4 p-6">
+                <h2 className="font-display text-xl text-slate-800 leading-snug">{w.title}</h2>
+                {(w.partner1Name || w.partner2Name) && (
+                  <p className="text-sm font-medium text-slate-500">
+                    {[w.partner1Name, w.partner2Name].filter(Boolean).join(" & ")}
+                  </p>
+                )}
+                <div className="flex items-center gap-2 text-sm text-slate-400">
+                  <CalendarDays className="h-4 w-4 text-slate-300" />
+                  {new Date(w.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
+                </div>
+                <div className="flex items-center gap-2 text-sm font-semibold text-money-600">
+                  <Wallet className="h-4 w-4" />
+                  {formatBRL(w.budgetTotal)}
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
+
+        {/* ── Add Wedding card ── */}
         {canCreate && (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button variant="gold"><Plus className="h-4 w-4 mr-2" /> Novo</Button>
+              <button
+                type="button"
+                className="rounded-3xl border-2 border-dashed border-slate-200 bg-white/30 backdrop-blur-sm hover:bg-white/50 hover:border-gold-300 hover:-translate-y-1 transition-all duration-200 cursor-pointer animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both min-h-[140px] flex flex-col items-center justify-center gap-2 p-6 text-slate-400 hover:text-gold-500 group"
+                style={{ animationDelay: `${200 + (weddings?.length ?? 0) * 80}ms` }}
+                aria-label="Adicionar novo casamento"
+              >
+                <div className="grid h-10 w-10 place-items-center rounded-2xl border-2 border-dashed border-slate-200 group-hover:border-gold-300 transition-colors">
+                  <Plus className="h-5 w-5" />
+                </div>
+                <span className="text-sm font-medium">Novo Casamento</span>
+              </button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Novo casamento</DialogTitle></DialogHeader>
@@ -137,43 +209,20 @@ export default function DashboardPage() {
             </DialogContent>
           </Dialog>
         )}
-      </header>
 
-      {weddings && weddings.length === 0 && (
-        <Card className="bg-white/40 backdrop-blur-md border-white/40 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both" style={{ animationDelay: "200ms" }}>
-          <CardContent className="text-center py-12 text-slate-500">
-            Nenhum casamento ainda. Clique em <strong>Novo</strong> para começar.
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {weddings?.map((w, i) => (
-          <Link key={w.id} href={`/weddings/${w.id}`}>
-            <Card 
-              className="bg-white/40 backdrop-blur-md border-white/40 hover:bg-white/60 hover:shadow-md hover:ring-2 hover:ring-offset-2 hover:ring-gold-300 hover:-translate-y-0.5 transition-all cursor-pointer animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both"
-              style={{ animationDelay: `${200 + i * 100}ms` }}
-            >
-              <CardContent className="space-y-3 pt-6">
-                <h2 className="font-display text-xl text-slate-900">{w.title}</h2>
-                {(w.partner1Name || w.partner2Name) && (
-                  <p className="text-sm text-slate-500">
-                    {[w.partner1Name, w.partner2Name].filter(Boolean).join(" & ")}
-                  </p>
-                )}
-                <div className="flex items-center gap-2 text-sm text-slate-500">
-                  <CalendarDays className="h-4 w-4" />
-                  {new Date(w.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
-                </div>
-                <div className="flex items-center gap-2 text-sm text-money-600">
-                  <Wallet className="h-4 w-4" /> {formatBRL(w.budgetTotal)}
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
+        {/* ── Empty state ── */}
+        {weddings && weddings.length === 0 && !canCreate && (
+          <div className="col-span-full rounded-3xl bg-white/40 backdrop-blur-md border border-white/40 py-14 text-center text-slate-400 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both" style={{ animationDelay: "200ms" }}>
+            Nenhum casamento ainda.{" "}
+            <Link href="/pricing" className="text-gold-500 hover:underline font-medium">
+              Faça upgrade
+            </Link>{" "}
+            para começar.
+          </div>
+        )}
       </div>
 
+      {/* ── Workspace Members ── */}
       <WorkspaceMembers plan={plan} />
     </div>
   );
