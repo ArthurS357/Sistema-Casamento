@@ -10,7 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input, Label } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { formatBRL, toCents } from "@/lib/money";
-import { canManageMultipleWeddings, requiresUpgradeBanner } from "@/lib/permissions";
+import { canManageMultipleWeddings, requiresUpgradeBanner, canCreateWedding } from "@/lib/permissions";
+import { WorkspaceMembers } from "@/components/dashboard/workspace-members";
 
 interface Wedding {
   id: string;
@@ -61,7 +62,7 @@ export default function DashboardPage() {
 
   const isLoading = loadingWs || loadingWeddings;
   const plan = workspace?.plan || "free";
-  const canCreate = canManageMultipleWeddings(plan) || (weddings && weddings.length === 0);
+  const canCreate = !!weddings && canCreateWedding(plan, weddings.length);
 
   if (isLoading) {
     return (
@@ -157,6 +158,8 @@ export default function DashboardPage() {
           </Link>
         ))}
       </div>
+
+      <WorkspaceMembers plan={plan} />
     </div>
   );
 }

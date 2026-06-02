@@ -36,6 +36,11 @@ export const RegisterSchema = z.object({
 });
 export type RegisterInput = z.infer<typeof RegisterSchema>;
 
+export const WorkspaceMemberInviteSchema = z.object({
+  email: z.string().trim().toLowerCase().email(),
+});
+export type WorkspaceMemberInviteInput = z.infer<typeof WorkspaceMemberInviteSchema>;
+
 export const WeddingCreateSchema = z.object({
   title: nonEmpty,
   date: z.coerce.date(),

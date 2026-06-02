@@ -4,10 +4,11 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useState } from "react";
 import {
-  LayoutDashboard, Wallet, Users, Armchair, BarChart3, Settings, LogOut, Menu, X, Heart, Gift, ListChecks, Lock,
+  LayoutDashboard, Wallet, Users, Armchair, BarChart3, Settings, LogOut, Menu, X, Heart, Gift, ListChecks, Lock, Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useActivePlan } from "@/lib/use-plan";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 interface NavItem {
   href: string;
@@ -24,6 +25,7 @@ const globalNav: NavItem[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [liaOpen, setLiaOpen] = useState(false);
   const { isPremium } = useActivePlan();
   const weddingMatch = pathname.match(/^\/weddings\/([^/]+)/);
   const weddingId = weddingMatch?.[1];
@@ -67,7 +69,9 @@ export function Sidebar() {
           </Link>
         </div>
         <nav className="flex-1 p-3 space-y-6 overflow-y-auto">
-          <Section title="Geral" items={globalNav} pathname={pathname} locked={locked} />
+          <Section title="Geral" items={globalNav} pathname={pathname} locked={locked}>
+            <LiaTeaser onClick={() => setLiaOpen(true)} />
+          </Section>
           {weddingNav.length > 0 && <Section title="Casamento" items={weddingNav} pathname={pathname} locked={locked} />}
         </nav>
         <div className="p-3 border-t border-slate-100">
@@ -80,17 +84,54 @@ export function Sidebar() {
           </button>
         </div>
       </aside>
+
+      <Dialog open={liaOpen} onOpenChange={setLiaOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-gold-500" /> Lia — sua assistente de IA
+            </DialogTitle>
+            <DialogDescription>
+              Em breve a Lia vai te ajudar a planejar cada detalhe do casamento: sugerir
+              tarefas, organizar o orçamento e responder dúvidas em segundos. Estamos
+              caprichando nos últimos retoques. ✨
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-sm text-slate-500">
+            Fique de olho — avisaremos assim que ela estiver disponível.
+          </p>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
 
+function LiaTeaser({ onClick }: { onClick: () => void }) {
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex w-full items-center gap-2 px-3 py-2 rounded-md text-sm text-slate-600 hover:bg-slate-50"
+      >
+        <Sparkles className="h-4 w-4 shrink-0 text-gold-500" />
+        <span className="flex-1 text-left">Lia (IA) ✨</span>
+        <span className="inline-flex items-center rounded-full bg-gold-100 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-gold-700">
+          Em breve
+        </span>
+      </button>
+    </li>
+  );
+}
+
 function Section({
-  title, items, pathname, locked,
+  title, items, pathname, locked, children,
 }: {
   title: string;
   items: NavItem[];
   pathname: string;
   locked: boolean;
+  children?: React.ReactNode;
 }) {
   return (
     <div>
@@ -120,6 +161,7 @@ function Section({
             </li>
           );
         })}
+        {children}
       </ul>
     </div>
   );
