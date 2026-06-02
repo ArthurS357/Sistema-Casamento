@@ -13,6 +13,7 @@ import { LandingHero } from "@/components/landing/hero";
 import { LandingPainPoints } from "@/components/landing/pain-points";
 import { LandingSolution } from "@/components/landing/solution";
 import { LandingPricing } from "@/components/landing/pricing";
+import { LandingFaq } from "@/components/landing/faq";
 import { LandingFooter } from "@/components/landing/footer";
 
 export default async function Home() {
@@ -27,6 +28,7 @@ export default async function Home() {
         <LandingPainPoints />
         <LandingSolution />
         <LandingPricing />
+        <LandingFaq />
       </main>
       <LandingFooter />
     </main>

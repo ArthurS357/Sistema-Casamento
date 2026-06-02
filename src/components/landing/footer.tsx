@@ -18,6 +18,9 @@ export function LandingFooter() {
         </div>
 
         <nav className="flex flex-wrap gap-x-8 gap-y-3 text-sm text-slate-600">
+          <Link href="/#faq" className="transition-colors hover:text-slate-900">
+            Dúvidas
+          </Link>
           <Link href="/privacy" className="transition-colors hover:text-slate-900">
             Política de Privacidade
           </Link>

@@ -1,10 +1,29 @@
 "use client";
 
-import { Users, MailCheck, Wallet, LayoutGrid, BarChart3, ShieldCheck } from "lucide-react";
+import {
+  Users,
+  MailCheck,
+  Wallet,
+  LayoutGrid,
+  BarChart3,
+  ShieldCheck,
+  Sparkles,
+  Building2,
+} from "lucide-react";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
-const features = [
+type FeatureTag = { label: string; variant: "pro" | "gestor" | "ia" };
+
+interface Feature {
+  icon: typeof Users;
+  title: string;
+  body: string;
+  tags?: FeatureTag[];
+}
+
+const features: Feature[] = [
   {
     icon: Users,
     title: "Lista de convidados viva",
@@ -24,11 +43,29 @@ const features = [
     icon: LayoutGrid,
     title: "Mesas e assentos visuais",
     body: "Monte o salão arrastando convidados para as mesas, respeitando capacidade, formato e quem senta perto de quem.",
+    tags: [{ label: "Pro", variant: "pro" }],
   },
   {
     icon: BarChart3,
-    title: "Relatórios que decidem por você",
-    body: "Confirmados, pendentes, custos por categoria — os números que importam, prontos quando você precisar.",
+    title: "Relatórios e exportações",
+    body: "Confirmados, pendentes, custos por categoria — os números que importam, prontos para exportar quando você precisar.",
+    tags: [{ label: "Pro", variant: "pro" }],
+  },
+  {
+    icon: Sparkles,
+    title: "Lia, sua assistente de IA",
+    body: "Tire dúvidas, gere textos de convite e receba sugestões inteligentes de organização. Acesso básico no Pro, ilimitado no Gestor.",
+    tags: [
+      { label: "IA", variant: "ia" },
+      { label: "Pro", variant: "pro" },
+      { label: "Gestor", variant: "gestor" },
+    ],
+  },
+  {
+    icon: Building2,
+    title: "Vários casamentos e analítico",
+    body: "Gerencie até 5 casamentos ativos com dashboard analítico avançado por evento e equipe com membros ilimitados.",
+    tags: [{ label: "Gestor", variant: "gestor" }],
   },
   {
     icon: ShieldCheck,
@@ -37,12 +74,13 @@ const features = [
   },
 ];
 
-const BASE =
-  "transition-[opacity,transform] duration-1000 ease-out will-change-[opacity,transform]";
+const BASE = "transition-[opacity,transform] duration-1000 ease-out";
 
 export function LandingSolution() {
   const { ref, isVisible } = useScrollReveal<HTMLDivElement>();
-  const visible = isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8";
+  const visible = isVisible
+    ? "opacity-100 translate-y-0 will-change-auto"
+    : "opacity-0 translate-y-8 will-change-[opacity,transform]";
 
   return (
     <section id="solucao" className="py-24">
@@ -74,7 +112,14 @@ export function LandingSolution() {
               <div className="grid h-11 w-11 place-items-center rounded-xl bg-gold-50 text-gold-600 transition-colors group-hover:bg-gold-100">
                 <f.icon className="h-5 w-5" aria-hidden />
               </div>
-              <h3 className="mt-5 text-lg font-semibold text-slate-900">{f.title}</h3>
+              <div className="mt-5 flex flex-wrap items-center gap-2">
+                <h3 className="text-lg font-semibold text-slate-900">{f.title}</h3>
+                {f.tags?.map((tag) => (
+                  <Badge key={tag.label} variant={tag.variant}>
+                    {tag.label}
+                  </Badge>
+                ))}
+              </div>
               <p className="mt-2 leading-relaxed text-slate-600">{f.body}</p>
             </article>
           ))}

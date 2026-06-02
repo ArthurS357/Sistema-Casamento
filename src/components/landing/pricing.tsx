@@ -74,12 +74,13 @@ const plans: PlanCard[] = [
   },
 ];
 
-const BASE =
-  "transition-[opacity,transform] duration-1000 ease-out will-change-[opacity,transform]";
+const BASE = "transition-[opacity,transform] duration-1000 ease-out";
 
 export function LandingPricing() {
   const { ref, isVisible } = useScrollReveal<HTMLDivElement>();
-  const visible = isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8";
+  const visible = isVisible
+    ? "opacity-100 translate-y-0 will-change-auto"
+    : "opacity-0 translate-y-8 will-change-[opacity,transform]";
 
   return (
     <section id="planos" className="bg-slate-50 py-24">

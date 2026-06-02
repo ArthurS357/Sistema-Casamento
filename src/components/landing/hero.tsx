@@ -6,12 +6,15 @@ import { Button } from "@/components/ui/button";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { cn } from "@/lib/utils";
 
-const BASE =
-  "transition-[opacity,transform] duration-1000 ease-out will-change-[opacity,transform]";
+const BASE = "transition-[opacity,transform] duration-1000 ease-out";
 
 export function LandingHero() {
   const { ref, isVisible } = useScrollReveal<HTMLDivElement>();
-  const visible = isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8";
+  // will-change only while animating; drop to `auto` once revealed so the
+  // element leaves its GPU layer and text regains crisp subpixel rendering.
+  const visible = isVisible
+    ? "opacity-100 translate-y-0 will-change-auto"
+    : "opacity-0 translate-y-8 will-change-[opacity,transform]";
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-gold-50 via-white to-white">
