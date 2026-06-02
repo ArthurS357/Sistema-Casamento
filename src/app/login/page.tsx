@@ -28,13 +28,16 @@ export default function LoginPage() {
     });
     setLoading(false);
     if (res?.error) {
-      // Se credenciais corretas mas 2FA necessário, o authorize retorna null
-      // O usuário precisa digitar o código TOTP
-      if (!needs2FA) {
+      // 2FA só é solicitado quando o backend confirma explicitamente
+      // (code === "two_factor_required"). Qualquer outro erro é credencial
+      // inválida — evita o falso positivo de "2FA ativo" em senha errada.
+      if (res.code === "two_factor_required") {
         setNeeds2FA(true);
         setErr("Conta com 2FA ativo. Digite o código do autenticador.");
-      } else {
+      } else if (needs2FA) {
         setErr("Credenciais ou código 2FA inválidos.");
+      } else {
+        setErr("E-mail ou senha incorretos.");
       }
     } else {
       router.push("/dashboard");

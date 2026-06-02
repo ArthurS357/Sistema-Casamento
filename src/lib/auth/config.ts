@@ -1,4 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
+import { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
@@ -15,6 +16,16 @@ const credSchema = z.object({
   password: z.string().min(8).max(200),
   totpCode: z.string().length(6).optional(),
 });
+
+/**
+ * Erro específico de "2FA exigido". Diferencia esse caso de credenciais
+ * inválidas: o `code` é propagado ao cliente via SignInResponse.code,
+ * então o frontend só mostra o campo TOTP quando o backend confirma que
+ * o usuário realmente tem 2FA ativo — sem falso positivo em senha errada.
+ */
+class TwoFactorRequiredError extends CredentialsSignin {
+  override code = "two_factor_required";
+}
 
 export const authConfig: NextAuthConfig = {
   adapter: PrismaAdapter(prisma),
@@ -51,9 +62,10 @@ export const authConfig: NextAuthConfig = {
         const deleteResult = await evaluateSoftDelete(user.id, user.deleteRequestedAt);
         if (deleteResult === "expired") return null;
 
-        // 2FA — exige código TOTP se habilitado
+        // 2FA — exige código TOTP só se realmente habilitado E com secret.
+        // Sinaliza o caso "falta TOTP" com erro distinto p/ o frontend.
         if (user.twoFactorEnabled && user.twoFactorSecret) {
-          if (!totpCode) return null;
+          if (!totpCode) throw new TwoFactorRequiredError();
           // Dynamic import para evitar peso no bundle edge
           const { verifySync } = await import("otplib");
           const valid = verifySync({ token: totpCode, secret: user.twoFactorSecret });
