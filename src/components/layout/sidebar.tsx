@@ -4,11 +4,17 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useState } from "react";
 import {
-  LayoutDashboard, Wallet, Users, Armchair, BarChart3, Settings, LogOut, Menu, X, Heart, Gift, ListChecks,
+  LayoutDashboard, Wallet, Users, Armchair, BarChart3, Settings, LogOut, Menu, X, Heart, Gift, ListChecks, Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useActivePlan } from "@/lib/use-plan";
 
-interface NavItem { href: string; label: string; icon: React.ComponentType<{ className?: string }>; }
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  premium?: boolean;
+}
 
 const globalNav: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -18,8 +24,12 @@ const globalNav: NavItem[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { isPremium } = useActivePlan();
   const weddingMatch = pathname.match(/^\/weddings\/([^/]+)/);
   const weddingId = weddingMatch?.[1];
+
+  // Free trava badge nas features premium; null (carregando) não trava.
+  const locked = isPremium === false;
 
   const weddingNav: NavItem[] = weddingId
     ? [
@@ -27,8 +37,8 @@ export function Sidebar() {
         { href: `/weddings/${weddingId}/tasks`, label: "Checklist", icon: ListChecks },
         { href: `/weddings/${weddingId}/budget`, label: "Orçamento", icon: Wallet },
         { href: `/weddings/${weddingId}/guests`, label: "Convidados", icon: Users },
-        { href: `/weddings/${weddingId}/tables`, label: "Mesas", icon: Armchair },
-        { href: `/weddings/${weddingId}/gifts`, label: "Presentes", icon: Gift },
+        { href: `/weddings/${weddingId}/tables`, label: "Mesas", icon: Armchair, premium: true },
+        { href: `/weddings/${weddingId}/gifts`, label: "Presentes", icon: Gift, premium: true },
         { href: `/weddings/${weddingId}/reports`, label: "Relatórios", icon: BarChart3 },
       ]
     : [];
@@ -57,8 +67,8 @@ export function Sidebar() {
           </Link>
         </div>
         <nav className="flex-1 p-3 space-y-6 overflow-y-auto">
-          <Section title="Geral" items={globalNav} pathname={pathname} />
-          {weddingNav.length > 0 && <Section title="Casamento" items={weddingNav} pathname={pathname} />}
+          <Section title="Geral" items={globalNav} pathname={pathname} locked={locked} />
+          {weddingNav.length > 0 && <Section title="Casamento" items={weddingNav} pathname={pathname} locked={locked} />}
         </nav>
         <div className="p-3 border-t border-slate-100">
           <button
@@ -74,7 +84,14 @@ export function Sidebar() {
   );
 }
 
-function Section({ title, items, pathname }: { title: string; items: NavItem[]; pathname: string }) {
+function Section({
+  title, items, pathname, locked,
+}: {
+  title: string;
+  items: NavItem[];
+  pathname: string;
+  locked: boolean;
+}) {
   return (
     <div>
       <p className="px-3 mb-1 text-xs uppercase tracking-wider text-slate-400">{title}</p>
@@ -82,6 +99,7 @@ function Section({ title, items, pathname }: { title: string; items: NavItem[]; 
         {items.map((it) => {
           const active = pathname === it.href || (it.href !== "/dashboard" && pathname.startsWith(it.href));
           const Icon = it.icon;
+          const showLock = locked && it.premium;
           return (
             <li key={it.href}>
               <Link
@@ -91,7 +109,13 @@ function Section({ title, items, pathname }: { title: string; items: NavItem[]; 
                   active ? "bg-gold-50 text-gold-700 font-medium" : "text-slate-600 hover:bg-slate-50",
                 )}
               >
-                <Icon className="h-4 w-4" /> {it.label}
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="flex-1">{it.label}</span>
+                {showLock && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-gold-300">
+                    <Lock className="h-2.5 w-2.5" /> PRO
+                  </span>
+                )}
               </Link>
             </li>
           );

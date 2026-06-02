@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { requireWeddingAccess, errorResponse, AuthError } from "@/lib/auth/guards";
+import { requireWeddingAccess, requirePremiumWeddingFeature, errorResponse, AuthError } from "@/lib/auth/guards";
 import { GiftUpdateSchema } from "@/lib/validation/schemas";
 
 type Params = { params: Promise<{ id: string; giftId: string }> };
@@ -17,6 +17,7 @@ export async function PUT(req: Request, { params }: Params) {
   try {
     const { id, giftId } = await params;
     await requireWeddingAccess(id);
+    await requirePremiumWeddingFeature(id);
     await assertGiftInWedding(giftId, id);
     const data = GiftUpdateSchema.parse(await req.json());
     const updated = await prisma.gift.update({ where: { id: giftId }, data });
@@ -30,6 +31,7 @@ export async function DELETE(_req: Request, { params }: Params) {
   try {
     const { id, giftId } = await params;
     await requireWeddingAccess(id);
+    await requirePremiumWeddingFeature(id);
     await assertGiftInWedding(giftId, id);
     await prisma.gift.delete({ where: { id: giftId } });
     return new Response(null, { status: 204 });

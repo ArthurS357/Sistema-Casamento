@@ -12,6 +12,8 @@ import { Input, Select, Label } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { TableShape } from "@/lib/validation/enums";
 import { cn } from "@/lib/utils";
+import { useActivePlan } from "@/lib/use-plan";
+import { Paywall } from "@/components/paywall";
 
 interface Seat { id: string; number: number; guest: { id: string; name: string } | null; }
 interface Table { id: string; name: string; shape: string; capacity: number; seats: Seat[]; }
@@ -26,15 +28,19 @@ const SHAPE_OPTIONS = TableShape.options;
 export default function TablesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const qc = useQueryClient();
+  const { isPremium } = useActivePlan();
 
   const { data: tables } = useQuery<Table[]>({
     queryKey: ["tables", id], queryFn: () => apiFetch(`/api/weddings/${id}/tables`),
+    enabled: isPremium === true,
   });
   const { data: guests } = useQuery<Guest[]>({
     queryKey: ["guests", id], queryFn: () => apiFetch(`/api/weddings/${id}/guests`),
+    enabled: isPremium === true,
   });
   const { data: rels } = useQuery<Relationship[]>({
     queryKey: ["rels", id], queryFn: () => apiFetch(`/api/weddings/${id}/relationships`),
+    enabled: isPremium === true,
   });
 
   const moveGuest = useMutation({
@@ -74,6 +80,20 @@ export default function TablesPage({ params }: { params: Promise<{ id: string }>
   }
 
   const unassigned = (guests ?? []).filter((g) => !g.seatId);
+
+  if (isPremium === false) {
+    return (
+      <Paywall
+        title="Mesas & Assentos"
+        description="Monte o mapa de mesas arrastando convidados, com alertas de conflito e afinidade para o lugar perfeito de cada um."
+        benefits={[
+          "Arrastar-e-soltar para alocar convidados",
+          "Alertas de conflito e afinidade entre convidados",
+          "Mesas de qualquer formato e capacidade",
+        ]}
+      />
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">

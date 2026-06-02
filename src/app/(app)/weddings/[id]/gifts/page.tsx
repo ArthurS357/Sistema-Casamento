@@ -11,6 +11,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatBRL, toCents, toReais } from "@/lib/money";
+import { useActivePlan } from "@/lib/use-plan";
+import { Paywall } from "@/components/paywall";
 
 interface Gift {
   id: string;
@@ -30,6 +32,7 @@ interface WeddingInfo {
 export default function GiftsAdminPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const qc = useQueryClient();
+  const { isPremium } = useActivePlan();
 
   const { data: wedding } = useQuery<WeddingInfo>({
     queryKey: ["wedding", id],
@@ -38,6 +41,7 @@ export default function GiftsAdminPage({ params }: { params: Promise<{ id: strin
   const { data: gifts } = useQuery<Gift[]>({
     queryKey: ["gifts", id],
     queryFn: () => apiFetch(`/api/weddings/${id}/gifts`),
+    enabled: isPremium === true,
   });
 
   const [open, setOpen] = useState(false);
@@ -74,6 +78,20 @@ export default function GiftsAdminPage({ params }: { params: Promise<{ id: strin
     navigator.clipboard?.writeText(`${window.location.origin}/gift/${id}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  if (isPremium === false) {
+    return (
+      <Paywall
+        title="Lista de Presentes"
+        description="Receba presentes via PIX com QR Code automático e uma página linda para compartilhar com seus convidados."
+        benefits={[
+          "Página pública de presentes personalizada",
+          "QR Code e PIX copia-e-cola gerados automaticamente",
+          "Controle do que já foi presenteado",
+        ]}
+      />
+    );
   }
 
   return (

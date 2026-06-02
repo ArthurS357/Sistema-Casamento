@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { requireWeddingAccess, errorResponse, AuthError } from "@/lib/auth/guards";
+import { requireWeddingAccess, requirePremiumWeddingFeature, errorResponse, AuthError } from "@/lib/auth/guards";
 import { TableUpdateSchema } from "@/lib/validation/schemas";
 
 type Params = { params: Promise<{ id: string; tableId: string }> };
@@ -13,6 +13,7 @@ export async function GET(_req: Request, { params }: Params) {
   try {
     const { id, tableId } = await params;
     await requireWeddingAccess(id);
+    await requirePremiumWeddingFeature(id);
     await ensureTable(id, tableId);
     return Response.json(
       await prisma.table.findUnique({
@@ -29,6 +30,7 @@ export async function PUT(req: Request, { params }: Params) {
   try {
     const { id, tableId } = await params;
     await requireWeddingAccess(id);
+    await requirePremiumWeddingFeature(id);
     await ensureTable(id, tableId);
     const data = TableUpdateSchema.parse(await req.json());
 
@@ -67,6 +69,7 @@ export async function DELETE(_req: Request, { params }: Params) {
   try {
     const { id, tableId } = await params;
     await requireWeddingAccess(id);
+    await requirePremiumWeddingFeature(id);
     await ensureTable(id, tableId);
     await prisma.table.delete({ where: { id: tableId } });
     return new Response(null, { status: 204 });

@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { canAccessPremiumFeatures } from "@/lib/permissions";
 
 export class AuthError extends Error {
   constructor(public status: number, message: string) {
@@ -38,6 +39,27 @@ export async function requireWeddingAccess(weddingId: string): Promise<string> {
   const userId = await requireUserId();
   await assertWeddingAccess(weddingId, userId);
   return userId;
+}
+
+/** Plano do workspace dono da wedding. 404 se a wedding não existir. */
+export async function getWeddingPlan(weddingId: string): Promise<string> {
+  const w = await prisma.wedding.findUnique({
+    where: { id: weddingId },
+    select: { workspace: { select: { plan: true } } },
+  });
+  if (!w) throw new AuthError(404, "Wedding not found");
+  return w.workspace.plan;
+}
+
+/**
+ * Paywall server-side: bloqueia features premium (Presentes, Mesas) quando
+ * o plano dono da wedding é Free. Assume que o acesso já foi validado.
+ */
+export async function requirePremiumWeddingFeature(weddingId: string): Promise<void> {
+  const plan = await getWeddingPlan(weddingId);
+  if (!canAccessPremiumFeatures(plan)) {
+    throw new AuthError(403, "Recurso disponível apenas nos planos Pro e Gestor.");
+  }
 }
 
 /**
