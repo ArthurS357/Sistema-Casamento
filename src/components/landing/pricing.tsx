@@ -107,7 +107,7 @@ export function LandingPricing() {
                 BASE,
                 visible,
                 "hover:duration-150",
-                "group relative flex flex-col rounded-3xl border bg-white p-8 shadow-sm hover:scale-[1.02] hover:ring-2 hover:ring-offset-2 hover:ring-gold-300 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-gold-400 cursor-pointer",
+                "group/card relative flex flex-col rounded-3xl border bg-white p-8 shadow-sm hover:scale-[1.02] hover:ring-2 hover:ring-offset-2 hover:ring-gold-300 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-gold-400 cursor-pointer",
                 plan.featured
                   ? "border-gold-300 ring-1 ring-gold-200 md:-translate-y-2"
                   : "border-slate-200",
@@ -129,7 +129,7 @@ export function LandingPricing() {
                 <span className="font-display text-4xl text-slate-900 antialiased transform-gpu">
                   <span className="sr-only">{`R$ ${plan.price}`}</span>
                   <span aria-hidden="true">
-                    R<span className="inline-block group-hover:hidden">$</span><span className="hidden group-hover:inline-block">S</span> {plan.price}
+                    R<span className="inline-block group-hover/card:hidden">$</span><span className="hidden group-hover/card:inline-block">S</span> {plan.price}
                   </span>
                 </span>
                 <span className="text-sm text-slate-500">/ {plan.cadence}</span>
