@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useState } from "react";
@@ -69,8 +70,8 @@ export function Sidebar() {
       >
         <div className="p-5 border-b border-slate-100">
           <Link href="/dashboard" className="flex items-center gap-2 font-display text-xl">
-            <Heart className="h-5 w-5 text-gold-400" />
-            Wedding
+            <Image src="/android-chrome-192x192.png" alt="Casamento.app Logo" width={28} height={28} className="h-7 w-7 object-contain" priority />
+            Casamento.app
           </Link>
         </div>
         <nav className="flex-1 p-3 space-y-6 overflow-y-auto">

@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { Heart, Menu, X } from "lucide-react";
+import Image from "next/image";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTypewriter } from "@/hooks/use-typewriter";
 import { cn } from "@/lib/utils";
@@ -72,10 +73,8 @@ export function LandingNav() {
           className="flex items-center gap-2 font-display text-lg text-slate-900"
           onClick={closeMenu}
         >
-          <span className="grid h-8 w-8 place-items-center rounded-full bg-gold-400 text-slate-900">
-            <Heart className="h-4 w-4" aria-hidden />
-          </span>
-          Atelier
+          <Image src="/android-chrome-192x192.png" alt="Casamento.app Logo" width={32} height={32} className="h-8 w-8 object-contain" priority />
+          Casamento.app
         </Link>
 
         {/* Typewriter — mobile only */}
