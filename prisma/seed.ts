@@ -44,14 +44,20 @@ interface SeedAccount {
 
 /**
  * Garante um usuário + workspace + membership de forma idempotente.
- * `update: {}` preserva qualquer alteração feita após o primeiro seed.
+ *
+ * O `update` força `password` e `systemRole`: se a conta já existir
+ * (de um seed anterior ou de login OAuth sem senha), a credencial é
+ * sobrescrita pela do `.env` — sem isso o login falha com a senha nova.
  */
 async function upsertAccount(account: SeedAccount): Promise<void> {
   const passwordHash = await argon2.hash(account.password, HASH_OPTS);
 
   const user = await prisma.user.upsert({
     where: { email: account.email },
-    update: {},
+    update: {
+      password: passwordHash,
+      systemRole: account.systemRole,
+    },
     create: {
       name: account.name,
       email: account.email,
