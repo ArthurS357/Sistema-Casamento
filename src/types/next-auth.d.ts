@@ -10,7 +10,7 @@ declare module "next-auth" {
       image?: string | null;
     };
   }
-  interface User { id: string; }
+  interface User { id: string; systemRole?: string | null; }
 }
 
 declare module "next-auth/jwt" {

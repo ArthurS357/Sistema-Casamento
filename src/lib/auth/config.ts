@@ -44,35 +44,53 @@ export const authConfig: NextAuthConfig = {
         totpCode: { label: "Código 2FA", type: "text" },
       },
       async authorize(raw, req) {
-        // Rate limit por IP antes de tocar no banco: contém brute-force.
-        const ip = getClientIp(req as Request);
-        const { success } = await checkRateLimit(authLimiter, `login:${ip}`);
-        if (!success) return null;
-        const parsed = credSchema.safeParse(raw);
-        if (!parsed.success) return null;
-        const { email, password, totpCode } = parsed.data;
-        const user = await prisma.user.findUnique({ where: { email } });
-        if (!user?.password) return null;
-        // Bloqueio administrativo: nega autenticação antes de validar a senha.
-        if (user.isBlocked) return null;
-        const ok = await verifyPassword(user.password, password);
-        if (!ok) return null;
+        try {
+          // Rate limit por IP antes de tocar no banco: contém brute-force.
+          const ip = getClientIp(req as Request);
+          const { success } = await checkRateLimit(authLimiter, `login:${ip}`);
+          if (!success) return null;
 
-        // Soft Delete — lazy evaluation
-        const deleteResult = await evaluateSoftDelete(user.id, user.deleteRequestedAt);
-        if (deleteResult === "expired") return null;
+          const parsed = credSchema.safeParse(raw);
+          if (!parsed.success) return null;
+          const { email, password, totpCode } = parsed.data;
 
-        // 2FA — exige código TOTP só se realmente habilitado E com secret.
-        // Sinaliza o caso "falta TOTP" com erro distinto p/ o frontend.
-        if (user.twoFactorEnabled && user.twoFactorSecret) {
-          if (!totpCode) throw new TwoFactorRequiredError();
-          // Dynamic import para evitar peso no bundle edge
-          const { verifySync } = await import("otplib");
-          const valid = verifySync({ token: totpCode, secret: user.twoFactorSecret });
-          if (!valid) return null;
+          const user = await prisma.user.findUnique({ where: { email } });
+          // Sem usuário ou sem senha (conta só-OAuth): não autentica por credenciais.
+          if (!user?.password) return null;
+          // Bloqueio administrativo: nega autenticação antes de validar a senha.
+          if (user.isBlocked) return null;
+
+          const isValidPassword = await verifyPassword(user.password, password);
+          if (!isValidPassword) return null;
+
+          // Soft Delete — lazy evaluation
+          const deleteResult = await evaluateSoftDelete(user.id, user.deleteRequestedAt);
+          if (deleteResult === "expired") return null;
+
+          // 2FA — exige código TOTP só se realmente habilitado E com secret.
+          // Sinaliza o caso "falta TOTP" com erro distinto p/ o frontend.
+          if (user.twoFactorEnabled && user.twoFactorSecret) {
+            if (!totpCode) throw new TwoFactorRequiredError();
+            // Dynamic import para evitar peso no bundle edge
+            const { verifySync } = await import("otplib");
+            const valid = verifySync({ token: totpCode, secret: user.twoFactorSecret });
+            if (!valid) return null;
+          }
+
+          // Estrutura estrita exigida pelo Auth.js (+ systemRole p/ RBAC).
+          return {
+            id: String(user.id),
+            name: user.name,
+            email: user.email,
+            systemRole: user.systemRole,
+          };
+        } catch (error) {
+          // Erros de controle do Auth.js (ex.: 2FA exigido) PRECISAM propagar —
+          // engoli-los aqui transformaria o prompt de TOTP em "senha incorreta".
+          if (error instanceof CredentialsSignin) throw error;
+          console.error("🚨 ERRO NO AUTHORIZE:", error);
+          return null;
         }
-
-        return { id: user.id, email: user.email, name: user.name ?? undefined };
       },
     }),
   ],
