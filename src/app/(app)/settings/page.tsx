@@ -9,6 +9,7 @@ import {
 import { QRCodeSVG } from "qrcode.react";
 import { apiFetch } from "@/lib/api";
 import { useActivePlan } from "@/lib/use-plan";
+import { PAID_PLANS, type PaidPlan } from "@/lib/plans";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { NameInput } from "@/components/ui/name-input";
@@ -27,11 +28,22 @@ interface ProfileData {
 }
 interface TwoFactorSetup { secret: string; otpauthUrl: string }
 
+// Ordem dos planos (free < pro < gestor) p/ oferecer só upgrades reais.
+const PLAN_RANK: Record<string, number> = { free: 0, pro: 1, gestor: 2 };
+const PLAN_LABEL: Record<PaidPlan, string> = {
+  pro: "Assinar Pro · R$ 40/mês",
+  gestor: "Assinar Gestor · R$ 80/mês",
+};
+
 // ─── Page ───────────────────────────────────────────────────────
 export default function SettingsPage() {
   const { data: session, update: updateSession } = useSession();
   const qc = useQueryClient();
   const { plan, isLoading: planLoading } = useActivePlan();
+
+  // Planos que representam upgrade em relação ao plano atual.
+  const currentRank = PLAN_RANK[plan ?? "free"] ?? 0;
+  const upgrades = PAID_PLANS.filter((p) => (PLAN_RANK[p] ?? 0) > currentRank);
 
   // Download state
   const [downloadState, setDownloadState] = useState<"idle" | "loading" | "done">("idle");
@@ -54,6 +66,9 @@ export default function SettingsPage() {
 
   // Delete account
   const [deleteOpen, setDeleteOpen] = useState(false);
+
+  // Checkout (upgrade de plano)
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   // ─── Queries ────────────────────────────────────────────────
   const { data: profile, isLoading: loadingProfile } = useQuery<ProfileData>({
@@ -135,6 +150,20 @@ export default function SettingsPage() {
       setDeleteOpen(false);
       signOut({ callbackUrl: "/login" });
     },
+  });
+
+  // Cria a Checkout Session e redireciona pra URL hospedada do Stripe.
+  const checkout = useMutation({
+    mutationFn: (target: PaidPlan) =>
+      apiFetch<{ url: string | null }>("/api/stripe/checkout", {
+        method: "POST",
+        body: JSON.stringify({ plan: target }),
+      }),
+    onSuccess: ({ url }) => {
+      if (url) window.location.href = url;
+      else setCheckoutError("Não foi possível iniciar o checkout. Tente novamente.");
+    },
+    onError: (e: Error) => setCheckoutError(e.message),
   });
 
   // ─── Handlers ───────────────────────────────────────────────
@@ -322,15 +351,47 @@ export default function SettingsPage() {
             Plano
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex items-center justify-between">
-          {planLoading ? (
-            <Skeleton className="h-6 w-20 rounded-full" />
-          ) : (
-            <span className="px-2.5 py-1 rounded-full bg-gold-100 text-gold-700 text-xs font-semibold capitalize">
-              {plan ?? "free"}
-            </span>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-slate-600">Plano atual</span>
+            {planLoading ? (
+              <Skeleton className="h-6 w-20 rounded-full" />
+            ) : (
+              <span className="px-2.5 py-1 rounded-full bg-gold-100 text-gold-700 text-xs font-semibold capitalize">
+                {plan ?? "free"}
+              </span>
+            )}
+          </div>
+
+          {!planLoading && upgrades.length > 0 && (
+            <div className="flex flex-col gap-2 sm:flex-row">
+              {upgrades.map((target) => (
+                <Button
+                  key={target}
+                  variant="gold"
+                  className="flex-1 gap-1.5"
+                  disabled={checkout.isPending}
+                  onClick={() => {
+                    setCheckoutError(null);
+                    checkout.mutate(target);
+                  }}
+                >
+                  {checkout.isPending && checkout.variables === target ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <CreditCard className="h-4 w-4" />
+                  )}
+                  {PLAN_LABEL[target]}
+                </Button>
+              ))}
+            </div>
           )}
-          <Button variant="gold" onClick={() => alert("Em breve.")}>Upgrade</Button>
+
+          {!planLoading && upgrades.length === 0 && (
+            <p className="text-xs text-slate-500">Você já está no plano máximo. 🎉</p>
+          )}
+
+          {checkoutError && <p className="text-xs text-red-500">{checkoutError}</p>}
         </CardContent>
       </Card>
 
