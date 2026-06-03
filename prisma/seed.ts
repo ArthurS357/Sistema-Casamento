@@ -10,8 +10,10 @@ const prisma = new PrismaClient();
  * (após deploys), sem destruir dados existentes. Usa `upsert` em todas
  * as escritas: rodar N vezes converge para o mesmo estado.
  *
- * - admin@atelie.com.br → systemRole "admin" (acesso ao painel de sistema)
- * - teste@atelie.com.br → conta de teste comum
+ * - Admin → e-mail/senha vêm de ADMIN_EMAIL / ADMIN_PASSWORD (.env).
+ *   systemRole "admin" (acesso ao painel de sistema). Sem essas
+ *   variáveis o seed aborta — credencial de admin nunca é hardcoded.
+ * - teste@atelie.com.br → conta de teste comum (credencial fixa de dev).
  *
  * Ambas recebem um Workspace + Membership "owner" para serem utilizáveis
  * no modelo multi-tenant (toda Wedding pertence a um Workspace).
@@ -25,40 +27,28 @@ const HASH_OPTS: argon2.Options = {
   parallelism: 1,
 };
 
-const DEFAULT_PASSWORD = "12345678";
+// Senha fixa da conta de teste (não-sensível, apenas para dev/QA).
+const TEST_PASSWORD = "12345678";
 
 type SystemRole = "user" | "admin";
 
 interface SeedAccount {
   readonly name: string;
   readonly email: string;
+  /** Senha em texto puro; é hasheada com argon2 em `upsertAccount`. */
+  readonly password: string;
   readonly systemRole: SystemRole;
   readonly workspaceName: string;
   readonly workspaceSlug: string;
 }
 
-const ACCOUNTS: readonly SeedAccount[] = [
-  {
-    name: "Admin Atelier",
-    email: "admin@atelie.com.br",
-    systemRole: "admin",
-    workspaceName: "Atelier Admin",
-    workspaceSlug: "atelier-admin",
-  },
-  {
-    name: "Conta de Teste",
-    email: "teste@atelie.com.br",
-    systemRole: "user",
-    workspaceName: "Atelier Teste",
-    workspaceSlug: "atelier-teste",
-  },
-] as const;
-
 /**
  * Garante um usuário + workspace + membership de forma idempotente.
  * `update: {}` preserva qualquer alteração feita após o primeiro seed.
  */
-async function upsertAccount(account: SeedAccount, passwordHash: string): Promise<void> {
+async function upsertAccount(account: SeedAccount): Promise<void> {
+  const passwordHash = await argon2.hash(account.password, HASH_OPTS);
+
   const user = await prisma.user.upsert({
     where: { email: account.email },
     update: {},
@@ -94,17 +84,42 @@ async function upsertAccount(account: SeedAccount, passwordHash: string): Promis
 async function main(): Promise<void> {
   console.log("🌱 Executando seed (idempotente via upsert)...");
 
-  const passwordHash = await argon2.hash(DEFAULT_PASSWORD, HASH_OPTS);
+  // Trava de segurança: credenciais de admin são obrigatórias e nunca hardcoded.
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
 
-  for (const account of ACCOUNTS) {
-    await upsertAccount(account, passwordHash);
+  if (!adminEmail || !adminPassword) {
+    throw new Error("ADMIN_EMAIL e ADMIN_PASSWORD devem estar definidos no .env");
+  }
+
+  const accounts: readonly SeedAccount[] = [
+    {
+      name: "Admin Atelier",
+      email: adminEmail,
+      password: adminPassword,
+      systemRole: "admin",
+      workspaceName: "Atelier Admin",
+      workspaceSlug: "atelier-admin",
+    },
+    {
+      name: "Conta de Teste",
+      email: "teste@atelie.com.br",
+      password: TEST_PASSWORD,
+      systemRole: "user",
+      workspaceName: "Atelier Teste",
+      workspaceSlug: "atelier-teste",
+    },
+  ];
+
+  for (const account of accounts) {
+    await upsertAccount(account);
     console.log(`   ✔ ${account.systemRole === "admin" ? "Admin" : "Teste"} → ${account.email}`);
   }
 
+  // Não logamos a senha do admin (vem do .env); só a credencial fixa de teste.
   console.log("\n✅ Seed concluído. Contas disponíveis:");
-  for (const account of ACCOUNTS) {
-    console.log(`   ${account.email} / ${DEFAULT_PASSWORD}`);
-  }
+  console.log(`   ${adminEmail} / (senha via ADMIN_PASSWORD)`);
+  console.log(`   teste@atelie.com.br / ${TEST_PASSWORD}`);
 }
 
 main()
