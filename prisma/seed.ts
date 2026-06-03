@@ -98,6 +98,18 @@ async function main(): Promise<void> {
     throw new Error("ADMIN_EMAIL e ADMIN_PASSWORD devem estar definidos no .env");
   }
 
+  // ⚠️ HARD RESET ("opção nuclear"): apaga TODOS os usuários, sessões e
+  // workspaces antes de recriar do zero. Destrutivo e irreversível — limpa
+  // resíduos de testes/OAuth. Ordem respeita as FKs (filhos → pais); os
+  // deletes em Workspace/User ainda cascateiam para weddings, memberships,
+  // tokens etc. NUNCA rode contra um banco com dados reais de produção.
+  console.warn("🧨 HARD RESET: apagando todos os usuários, sessões e workspaces...");
+  await prisma.session.deleteMany({});
+  await prisma.account.deleteMany({});
+  await prisma.membership.deleteMany({});
+  await prisma.workspace.deleteMany({});
+  await prisma.user.deleteMany({});
+
   const accounts: readonly SeedAccount[] = [
     {
       name: "Admin Atelier",
