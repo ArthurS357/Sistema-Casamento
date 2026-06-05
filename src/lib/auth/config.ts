@@ -36,7 +36,6 @@ export const authConfig: NextAuthConfig = {
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      allowDangerousEmailAccountLinking: true,
     }),
     Credentials({
       credentials: {
@@ -88,6 +87,7 @@ export const authConfig: NextAuthConfig = {
           // Erros de controle do Auth.js (ex.: 2FA exigido) PRECISAM propagar —
           // engoli-los aqui transformaria o prompt de TOTP em "senha incorreta".
           if (error instanceof CredentialsSignin) throw error;
+          console.error("🚨 [authorize] UNEXPECTED ERROR:", error);
           return null;
         }
       },
@@ -101,14 +101,18 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     // Trava de bloqueio também no fluxo OAuth (Google): usuário bloqueado
     // não autentica por nenhum provedor. Soft delete também avaliado aqui.
-    async signIn({ user }) {
+    async signIn({ user, account }) {
       if (!user?.email) return true;
       const found = await prisma.user.findUnique({
         where: { email: user.email },
-        select: { id: true, isBlocked: true, deleteRequestedAt: true },
+        select: { id: true, isBlocked: true, deleteRequestedAt: true, twoFactorEnabled: true },
       });
       if (!found) return true;
       if (found.isBlocked) return false;
+      // OAuth logins bypass the credentials authorize() path, so 2FA is never
+      // challenged there. Block OAuth entirely for accounts that have 2FA
+      // enabled — the user must authenticate via credentials (which enforce TOTP).
+      if (account?.provider !== "credentials" && found.twoFactorEnabled) return false;
       // Soft delete para OAuth
       if (found.deleteRequestedAt) {
         const result = await evaluateSoftDelete(found.id, found.deleteRequestedAt);
@@ -116,8 +120,21 @@ export const authConfig: NextAuthConfig = {
       }
       return true;
     },
-    jwt({ token, user }) {
-      if (user) token.id = user.id;
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      } else if (token.id && token.iat) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { passwordChangedAt: true },
+        });
+        if (
+          dbUser?.passwordChangedAt &&
+          dbUser.passwordChangedAt.getTime() > (token.iat as number) * 1000
+        ) {
+          return null;
+        }
+      }
       return token;
     },
     session({ session, token }) {

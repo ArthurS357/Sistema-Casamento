@@ -11,7 +11,7 @@ import { apiFetch } from "@/lib/api";
 import { useActivePlan } from "@/lib/use-plan";
 import { PAID_PLANS, type PaidPlan } from "@/lib/plans";
 import { Button } from "@/components/ui/button";
-import { Input, Label } from "@/components/ui/input";
+import { Input, Label, PasswordInput } from "@/components/ui/input";
 import { NameInput } from "@/components/ui/name-input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -287,11 +287,11 @@ export default function SettingsPage() {
             >
               <div>
                 <Label htmlFor="current-pwd">Senha atual</Label>
-                <Input id="current-pwd" type="password" minLength={8} required value={currentPwd} onChange={(e) => setCurrentPwd(e.target.value)} />
+                <PasswordInput id="current-pwd" minLength={8} required value={currentPwd} onChange={(e) => setCurrentPwd(e.target.value)} />
               </div>
               <div>
                 <Label htmlFor="new-pwd">Nova senha</Label>
-                <Input id="new-pwd" type="password" minLength={8} required value={newPwd} onChange={(e) => setNewPwd(e.target.value)} />
+                <PasswordInput id="new-pwd" minLength={8} required value={newPwd} onChange={(e) => setNewPwd(e.target.value)} />
               </div>
               {pwdMsg && (
                 <div className={`rounded-md border p-2.5 text-xs animate-in fade-in slide-in-from-top-2 ${

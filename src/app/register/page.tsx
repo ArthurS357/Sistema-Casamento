@@ -6,7 +6,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input, Label } from "@/components/ui/input";
+import { Input, Label, PasswordInput } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AuthShell } from "@/components/auth/auth-shell";
 import {
@@ -98,7 +98,7 @@ export default function RegisterPage() {
 
         <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both duration-500" style={{ animationDelay: "300ms" }}>
           <Label htmlFor="password">Senha (mín. 8)</Label>
-          <Input id="password" type="password" aria-invalid={!!errors.password} {...register("password")} />
+          <PasswordInput id="password" aria-invalid={!!errors.password} {...register("password")} />
           {errors.password && <p className="mt-1.5 text-xs text-red-600" role="alert">{errors.password.message}</p>}
         </div>
 

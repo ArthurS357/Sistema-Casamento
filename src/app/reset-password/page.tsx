@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Lock, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input, Label } from "@/components/ui/input";
+import { Label, PasswordInput } from "@/components/ui/input";
 import { AuthShell } from "@/components/auth/auth-shell";
 
 function ResetPasswordForm() {
@@ -84,11 +84,11 @@ function ResetPasswordForm() {
             <Lock className="inline h-3.5 w-3.5 mr-1 text-slate-400" />
             Nova senha
           </Label>
-          <Input id="password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} aria-invalid={!!err} />
+          <PasswordInput id="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} aria-invalid={!!err} />
         </div>
         <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both duration-500" style={{ animationDelay: "200ms" }}>
           <Label htmlFor="confirm">Confirmar senha</Label>
-          <Input id="confirm" type="password" required minLength={8} value={confirm} onChange={(e) => setConfirm(e.target.value)} aria-invalid={!!err} />
+          <PasswordInput id="confirm" required minLength={8} value={confirm} onChange={(e) => setConfirm(e.target.value)} aria-invalid={!!err} />
         </div>
         {err && (
           <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600 animate-in fade-in slide-in-from-top-2" role="alert">
