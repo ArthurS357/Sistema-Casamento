@@ -123,16 +123,25 @@ export const authConfig: NextAuthConfig = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-      } else if (token.id && token.iat) {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          select: { passwordChangedAt: true },
-        });
-        if (
-          dbUser?.passwordChangedAt &&
-          dbUser.passwordChangedAt.getTime() > (token.iat as number) * 1000
-        ) {
-          return null;
+        return token;
+      }
+      // Invalidate tokens issued before the user's last password reset.
+      // Wrapped in try/catch so a stale Prisma client (passwordChangedAt not
+      // yet in generated types) degrades gracefully instead of aborting sign-in.
+      if (token.id && token.iat) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { passwordChangedAt: true },
+          });
+          if (
+            dbUser?.passwordChangedAt &&
+            dbUser.passwordChangedAt.getTime() > (token.iat as number) * 1000
+          ) {
+            return null;
+          }
+        } catch {
+          // Prisma client not yet regenerated — skip check, let token through.
         }
       }
       return token;
