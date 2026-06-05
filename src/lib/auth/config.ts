@@ -14,8 +14,13 @@ import { z } from "zod";
 const credSchema = z.object({
   email,
   password: z.string().min(8).max(200),
-  // Auth.js v5 serializes `undefined` as "" in form body — trim + normalise to undefined.
-  totpCode: z.string().trim().length(6).or(z.literal("").transform(() => undefined)).optional(),
+  // Auth.js v5 may serialize `undefined` as "" or as the string "undefined" depending
+  // on the beta version. Preprocess normalises all "absent" cases to undefined so the
+  // length(6) check only runs when there is an actual TOTP code.
+  totpCode: z.preprocess(
+    (v) => (v === "" || v === "undefined" || v == null ? undefined : v),
+    z.string().trim().length(6).optional(),
+  ),
 });
 
 /**
@@ -45,28 +50,50 @@ export const authConfig: NextAuthConfig = {
       },
       async authorize(raw, req) {
         try {
+          console.log("[authorize] raw credentials:", JSON.stringify(raw));
+
           // Rate limit por IP antes de tocar no banco: contém brute-force.
           const ip = getClientIp(req as Request);
           const { success } = await checkRateLimit(authLimiter, `login:${ip}`);
-          if (!success) return null;
+          if (!success) {
+            console.log("[authorize] ❌ rate limit exceeded for IP:", ip);
+            return null;
+          }
 
           const parsed = credSchema.safeParse(raw);
-          if (!parsed.success) return null;
+          if (!parsed.success) {
+            console.log("[authorize] ❌ schema validation failed:", JSON.stringify(parsed.error.flatten()));
+            return null;
+          }
           const { email, password, totpCode } = parsed.data;
+          console.log("[authorize] ✅ schema ok — email:", email, "totpCode present:", !!totpCode);
 
           const user = await prisma.user.findUnique({ where: { email } });
           // Sem usuário ou sem senha (conta só-OAuth): não autentica por credenciais.
-          if (!user?.password) return null;
+          if (!user?.password) {
+            console.log("[authorize] ❌ user not found or no password for:", email);
+            return null;
+          }
+          console.log("[authorize] ✅ user found:", user.id);
 
           // verifyPassword antes de isBlocked para evitar timing oracle:
           // retornar antes do hash expõe se um e-mail está bloqueado vs. inexistente.
           const isValidPassword = await verifyPassword(user.password, password);
-          if (!isValidPassword) return null;
-          if (user.isBlocked) return null;
+          if (!isValidPassword) {
+            console.log("[authorize] ❌ invalid password for:", email);
+            return null;
+          }
+          if (user.isBlocked) {
+            console.log("[authorize] ❌ user is blocked:", email);
+            return null;
+          }
 
           // Soft Delete — lazy evaluation
           const deleteResult = await evaluateSoftDelete(user.id, user.deleteRequestedAt);
-          if (deleteResult === "expired") return null;
+          if (deleteResult === "expired") {
+            console.log("[authorize] ❌ soft-deleted account:", email);
+            return null;
+          }
 
           // 2FA — exige código TOTP só se realmente habilitado E com secret.
           // Sinaliza o caso "falta TOTP" com erro distinto p/ o frontend.
@@ -75,9 +102,13 @@ export const authConfig: NextAuthConfig = {
             // Dynamic import para evitar peso no bundle edge
             const { verifySync } = await import("otplib");
             const valid = verifySync({ token: totpCode, secret: user.twoFactorSecret });
-            if (!valid) return null;
+            if (!valid) {
+              console.log("[authorize] ❌ invalid TOTP code for:", email);
+              return null;
+            }
           }
 
+          console.log("[authorize] ✅ login success for:", email);
           return {
             id: String(user.id),
             name: user.name,

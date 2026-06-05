@@ -107,12 +107,18 @@ async function main(): Promise<void> {
   // resíduos de testes/OAuth. Ordem respeita as FKs (filhos → pais); os
   // deletes em Workspace/User ainda cascateiam para weddings, memberships,
   // tokens etc. NUNCA rode contra um banco com dados reais de produção.
+  // Wrapped in try/catch: quando o seed roda logo após `migrate reset` (sem
+  // migration files), as tabelas ainda não existem — o erro P2021 seria fatal.
   console.warn("🧨 HARD RESET: apagando todos os usuários, sessões e workspaces...");
-  await prisma.session.deleteMany({});
-  await prisma.account.deleteMany({});
-  await prisma.membership.deleteMany({});
-  await prisma.workspace.deleteMany({});
-  await prisma.user.deleteMany({});
+  try {
+    await prisma.session.deleteMany({});
+    await prisma.account.deleteMany({});
+    await prisma.membership.deleteMany({});
+    await prisma.workspace.deleteMany({});
+    await prisma.user.deleteMany({});
+  } catch {
+    console.warn("   ⚠ Tabelas ainda não existem — hard reset ignorado (banco limpo).");
+  }
 
   const accounts: readonly SeedAccount[] = [
     {

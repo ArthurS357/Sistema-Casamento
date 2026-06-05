@@ -26,6 +26,7 @@ model User {
   aiConsent         Boolean      @default(true)       // consentimento LGPD para uso de IA (Lia)
   twoFactorSecret   String?                           // TOTP secret (Base32)
   twoFactorEnabled  Boolean      @default(false)      // 2FA ativo?
+  passwordChangedAt DateTime?                          // set on every password reset; JWTs issued before this are rejected
   deleteRequestedAt DateTime?                          // soft delete: data da solicitação
   memberships       Membership[]
   accounts          Account[]
