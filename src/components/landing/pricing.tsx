@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Plan } from "@/lib/plans";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
+import { useSession } from "next-auth/react";
 
 interface PlanCard {
   id: Plan;
@@ -78,6 +79,8 @@ const BASE = "transition-[opacity,transform] duration-1000 ease-out";
 
 export function LandingPricing() {
   const { ref, isVisible } = useScrollReveal<HTMLDivElement>();
+  const { data: session } = useSession();
+
   const visible = isVisible
     ? "opacity-100 translate-y-0 will-change-auto"
     : "opacity-0 translate-y-8 will-change-[opacity,transform]";
@@ -150,13 +153,26 @@ export function LandingPricing() {
                 ))}
               </ul>
 
-              <Link href="/register" className="mt-auto block pt-8">
+              <Link
+                href={
+                  session
+                    ? plan.id === "free"
+                      ? "/dashboard"
+                      : "/settings"
+                    : "/register"
+                }
+                className="mt-auto block pt-8"
+              >
                 <Button
                   variant={plan.featured ? "gold" : "outline"}
                   size="lg"
                   className="w-full"
                 >
-                  {plan.cta}
+                  {session
+                    ? plan.id === "free"
+                      ? "Acessar Painel"
+                      : "Fazer Upgrade"
+                    : plan.cta}
                 </Button>
               </Link>
             </article>
