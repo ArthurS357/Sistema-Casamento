@@ -115,7 +115,7 @@ export default function DashboardPage() {
                 <p className="text-sm text-slate-500">Desbloqueie acesso total a convidados, RSVP e controle completo do grande dia.</p>
               </div>
             </div>
-            <Link href="/pricing" className="w-full sm:w-auto shrink-0">
+            <Link href="/settings" className="w-full sm:w-auto shrink-0">
               <Button variant="gold" className="w-full">Fazer Upgrade</Button>
             </Link>
           </CardContent>
@@ -217,7 +217,7 @@ export default function DashboardPage() {
         {weddings && weddings.length === 0 && !canCreate && (
           <div className="col-span-full rounded-3xl bg-white/40 backdrop-blur-md border border-white/40 py-14 text-center text-slate-400 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both" style={{ animationDelay: "200ms" }}>
             Nenhum casamento ainda.{" "}
-            <Link href="/pricing" className="text-gold-500 hover:underline font-medium">
+            <Link href="/settings" className="text-gold-500 hover:underline font-medium">
               Faça upgrade
             </Link>{" "}
             para começar.
