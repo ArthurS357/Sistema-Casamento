@@ -123,6 +123,18 @@ export const authConfig: NextAuthConfig = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        // systemRole alimenta o gate de Admin no cliente (useSession). Vem do
+        // adapter no fluxo OAuth, mas não no de credentials — resolvemos do
+        // banco para cobrir os dois caminhos de login.
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: user.id as string },
+            select: { systemRole: true },
+          });
+          token.systemRole = dbUser?.systemRole ?? "user";
+        } catch {
+          token.systemRole = token.systemRole ?? "user";
+        }
         return token;
       }
       // Invalidate tokens issued before the user's last password reset.
@@ -132,7 +144,7 @@ export const authConfig: NextAuthConfig = {
         try {
           const dbUser = await prisma.user.findUnique({
             where: { id: token.id as string },
-            select: { passwordChangedAt: true },
+            select: { passwordChangedAt: true, systemRole: true },
           });
           if (
             dbUser?.passwordChangedAt &&
@@ -140,6 +152,8 @@ export const authConfig: NextAuthConfig = {
           ) {
             return null;
           }
+          // Mantém o systemRole fresco a cada renovação do token.
+          token.systemRole = dbUser?.systemRole ?? token.systemRole ?? "user";
         } catch {
           // Prisma client not yet regenerated — skip check, let token through.
         }
@@ -147,7 +161,10 @@ export const authConfig: NextAuthConfig = {
       return token;
     },
     session({ session, token }) {
-      if (token?.id && session.user) session.user.id = token.id as string;
+      if (session.user) {
+        if (token?.id) session.user.id = token.id as string;
+        session.user.systemRole = (token.systemRole as string | undefined) ?? null;
+      }
       return session;
     },
   },

@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, CalendarDays, Wallet, Crown, Sparkles } from "lucide-react";
+import { Plus, CalendarDays, Wallet, Sparkles } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { formatBRL } from "@/lib/money";
 import { canManageMultipleWeddings, requiresUpgradeBanner, canCreateWedding } from "@/lib/permissions";
 import { WorkspaceMembers } from "@/components/dashboard/workspace-members";
+import { UpgradeBanner } from "@/components/dashboard/upgrade-banner";
 
 interface Wedding {
   id: string;
@@ -102,25 +103,8 @@ export default function DashboardPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-8 px-1">
 
-      {/* ── Upgrade Banner ── */}
-      {requiresUpgradeBanner(plan) && (
-        <Card className="rounded-3xl border-gold-300 bg-gold-50/60 backdrop-blur-md shadow-lg shadow-black/5 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both">
-          <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 gap-4">
-            <div className="flex items-center gap-4">
-              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gold-200/50 text-gold-700">
-                <Crown className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="font-display text-lg text-slate-900">Upgrade para o Pro</h3>
-                <p className="text-sm text-slate-500">Desbloqueie acesso total a convidados, RSVP e controle completo do grande dia.</p>
-              </div>
-            </div>
-            <Link href="/settings" className="w-full sm:w-auto shrink-0">
-              <Button variant="gold" className="w-full">Fazer Upgrade</Button>
-            </Link>
-          </CardContent>
-        </Card>
-      )}
+      {/* ── Upgrade Banner (dispensável) ── */}
+      {requiresUpgradeBanner(plan) && <UpgradeBanner />}
 
       {/* ── Personalized Header ── */}
       <header className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both" style={{ animationDelay: "80ms" }}>

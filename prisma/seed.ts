@@ -40,6 +40,8 @@ interface SeedAccount {
   readonly systemRole: SystemRole;
   readonly workspaceName: string;
   readonly workspaceSlug: string;
+  /** Plano do Workspace (ver src/lib/plans.ts): free | pro | gestor. Default free. */
+  readonly plan?: string;
 }
 
 /**
@@ -67,12 +69,14 @@ async function upsertAccount(account: SeedAccount): Promise<void> {
     },
   });
 
+  const plan = account.plan ?? "free";
   const workspace = await prisma.workspace.upsert({
     where: { slug: account.workspaceSlug },
-    update: {},
+    update: { plan },
     create: {
       name: account.workspaceName,
       slug: account.workspaceSlug,
+      plan,
     },
   });
 
@@ -118,6 +122,8 @@ async function main(): Promise<void> {
       systemRole: "admin",
       workspaceName: "Atelier Admin",
       workspaceSlug: "atelier-admin",
+      // Admin nasce com plano Pro: acesso total ao produto sem precisar de upgrade.
+      plan: "pro",
     },
     {
       name: "Conta de Teste",
