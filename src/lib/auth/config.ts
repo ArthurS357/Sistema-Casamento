@@ -14,7 +14,8 @@ import { z } from "zod";
 const credSchema = z.object({
   email,
   password: z.string().min(8).max(200),
-  totpCode: z.string().length(6).optional(),
+  // Auth.js v5 serializes `undefined` as "" in form body — trim + normalise to undefined.
+  totpCode: z.string().trim().length(6).or(z.literal("").transform(() => undefined)).optional(),
 });
 
 /**
@@ -57,11 +58,12 @@ export const authConfig: NextAuthConfig = {
           const user = await prisma.user.findUnique({ where: { email } });
           // Sem usuário ou sem senha (conta só-OAuth): não autentica por credenciais.
           if (!user?.password) return null;
-          // Bloqueio administrativo: nega autenticação antes de validar a senha.
-          if (user.isBlocked) return null;
 
+          // verifyPassword antes de isBlocked para evitar timing oracle:
+          // retornar antes do hash expõe se um e-mail está bloqueado vs. inexistente.
           const isValidPassword = await verifyPassword(user.password, password);
           if (!isValidPassword) return null;
+          if (user.isBlocked) return null;
 
           // Soft Delete — lazy evaluation
           const deleteResult = await evaluateSoftDelete(user.id, user.deleteRequestedAt);
@@ -77,18 +79,15 @@ export const authConfig: NextAuthConfig = {
             if (!valid) return null;
           }
 
-          // Estrutura estrita exigida pelo Auth.js (+ systemRole p/ RBAC).
           return {
             id: String(user.id),
             name: user.name,
             email: user.email,
-            systemRole: user.systemRole,
           };
         } catch (error) {
           // Erros de controle do Auth.js (ex.: 2FA exigido) PRECISAM propagar —
           // engoli-los aqui transformaria o prompt de TOTP em "senha incorreta".
           if (error instanceof CredentialsSignin) throw error;
-          console.error("🚨 ERRO NO AUTHORIZE:", error);
           return null;
         }
       },
