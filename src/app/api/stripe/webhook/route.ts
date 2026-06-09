@@ -1,7 +1,6 @@
 import type Stripe from "stripe";
 import { stripe, planForPriceId } from "@/lib/stripe";
 import { prisma } from "@/lib/db";
-import { isPaidPlan } from "@/lib/plans";
 
 // Webhook precisa do raw body e nunca pode ser cacheado pelo App Router.
 export const dynamic = "force-dynamic";
@@ -37,26 +36,39 @@ export async function POST(req: Request) {
     switch (event.type) {
       case "checkout.session.completed": {
         const s = event.data.object as Stripe.Checkout.Session;
-        // workspaceId/plan vêm do metadata; client_reference_id é fallback.
+        // workspaceId vem do metadata; client_reference_id é fallback.
         const workspaceId = s.metadata?.workspaceId ?? s.client_reference_id ?? undefined;
-        const plan = s.metadata?.plan;
-        if (workspaceId && plan && isPaidPlan(plan)) {
-          await prisma.workspace.update({
-            where: { id: workspaceId },
-            data: {
-              plan,
-              stripeCustomerId: typeof s.customer === "string" ? s.customer : undefined,
-              stripeSubscriptionId:
-                typeof s.subscription === "string" ? s.subscription : undefined,
-            },
-          });
-          console.info(`[stripe-webhook] workspace ${workspaceId} → plano ${plan}`);
-        } else {
-          // Auditoria: pagamento sem metadata utilizável não atualiza nada.
+        if (!workspaceId) {
+          console.warn(`[stripe-webhook] checkout ${event.id} sem workspaceId — ignorado`);
+          break;
+        }
+        // O plano é derivado do preço efetivamente pago, nunca do metadata:
+        // o metadata é definido na criação do checkout e pode ser forjado.
+        const lineItems = await stripe.checkout.sessions.listLineItems(s.id, { limit: 1 });
+        const priceId = lineItems.data[0]?.price?.id;
+        const plan = planForPriceId(priceId);
+        if (!plan) {
+          console.error(
+            `[stripe-webhook] checkout ${event.id} com price desconhecido (${priceId ?? "ausente"}) — ignorado`,
+          );
+          break;
+        }
+        if (s.metadata?.plan && s.metadata.plan !== plan) {
+          // Auditoria: divergência indica tentativa de manipulação do checkout.
           console.warn(
-            `[stripe-webhook] checkout ${event.id} sem workspaceId/plan válidos — ignorado`,
+            `[stripe-webhook] checkout ${event.id}: metadata.plan (${s.metadata.plan}) diverge do preço pago (${plan}) — gravando o plano do preço`,
           );
         }
+        await prisma.workspace.update({
+          where: { id: workspaceId },
+          data: {
+            plan,
+            stripeCustomerId: typeof s.customer === "string" ? s.customer : undefined,
+            stripeSubscriptionId:
+              typeof s.subscription === "string" ? s.subscription : undefined,
+          },
+        });
+        console.info(`[stripe-webhook] workspace ${workspaceId} → plano ${plan}`);
         break;
       }
       case "customer.subscription.updated":

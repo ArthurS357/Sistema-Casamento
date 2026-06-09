@@ -8,6 +8,8 @@ import {
   canCreateWedding,
   canAddWorkspaceMember,
   maxWorkspaceMembers,
+  maxGuestsPerWedding,
+  canAddGuest,
 } from './permissions';
 
 test('canManageMultipleWeddings', () => {
@@ -61,6 +63,22 @@ test('maxWorkspaceMembers: Free=1, Pro=2, Gestor=ilimitado', () => {
   expect(maxWorkspaceMembers('free')).toBe(1);
   expect(maxWorkspaceMembers('pro')).toBe(2);
   expect(maxWorkspaceMembers('gestor')).toBe(Infinity);
+});
+
+test('maxGuestsPerWedding: Free=50, pagos=ilimitado', () => {
+  expect(maxGuestsPerWedding('free')).toBe(50);
+  expect(maxGuestsPerWedding('pro')).toBe(Infinity);
+  expect(maxGuestsPerWedding('gestor')).toBe(Infinity);
+  // Plano desconhecido cai no fail-safe restritivo (free).
+  expect(maxGuestsPerWedding('desconhecido')).toBe(50);
+});
+
+test('canAddGuest: Free trava em 50 convidados', () => {
+  expect(canAddGuest('free', 0)).toBe(true);
+  expect(canAddGuest('free', 49)).toBe(true);
+  expect(canAddGuest('free', 50)).toBe(false);
+  expect(canAddGuest('pro', 5000)).toBe(true);
+  expect(canAddGuest('gestor', 5000)).toBe(true);
 });
 
 test('canAddWorkspaceMember: Free só o dono, Pro libera 1 extra', () => {

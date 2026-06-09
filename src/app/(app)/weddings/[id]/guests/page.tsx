@@ -1,8 +1,11 @@
 "use client";
 import { use, useMemo, useState } from "react";
+import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, Edit, Link2, Share2 } from "lucide-react";
+import { Plus, Trash2, Edit, Link2, Share2, Crown } from "lucide-react";
 import { apiFetch } from "@/lib/api";
+import { useActivePlan } from "@/lib/use-plan";
+import { maxGuestsPerWedding } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
 import { Input, Select, Label, Textarea } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -96,8 +99,10 @@ export default function GuestsPage({ params }: { params: Promise<{ id: string }>
     <div className="max-w-6xl mx-auto space-y-6 animate-fade-up">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-3xl text-slate-900">Convidados</h1>
-        <Button variant="gold" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="h-4 w-4" /> Novo</Button>
+        <Button variant="gold" onClick={() => { setEditing(null); save.reset(); setOpen(true); }}><Plus className="h-4 w-4" /> Novo</Button>
       </header>
+
+      {guests && <GuestLimitBanner count={guests.length} />}
 
       <Card><CardContent className="flex flex-wrap gap-3">
         <Input placeholder="Buscar por nome ou email…" value={search} onChange={(e) => setSearch(e.target.value)} className="md:max-w-sm" />
@@ -170,7 +175,14 @@ export default function GuestsPage({ params }: { params: Promise<{ id: string }>
         </table>
       </CardContent></Card>
 
-      <GuestDialog open={open} onOpenChange={setOpen} editing={editing} onSave={(body) => save.mutate(body)} pending={save.isPending} />
+      <GuestDialog
+        open={open}
+        onOpenChange={(v) => { setOpen(v); if (!v) save.reset(); }}
+        editing={editing}
+        onSave={(body) => save.mutate(body)}
+        pending={save.isPending}
+        error={save.error?.message ?? null}
+      />
       {relOpen && (
         <RelationshipDialog
           guest={relOpen}
@@ -184,14 +196,65 @@ export default function GuestsPage({ params }: { params: Promise<{ id: string }>
   );
 }
 
+/**
+ * Isca de conversão do plano Free: barra de progresso do teto de convidados
+ * (ver PLAN_LIMITS.free.guests). Planos pagos (ilimitado) não renderizam nada.
+ * O enforcement real é server-side no POST de convidados; aqui é só o visual.
+ */
+function GuestLimitBanner({ count }: { count: number }) {
+  const { plan } = useActivePlan();
+  const max = plan ? maxGuestsPerWedding(plan) : Infinity;
+  if (!Number.isFinite(max)) return null;
+
+  const pct = Math.min(100, Math.round((count / max) * 100));
+  const atLimit = count >= max;
+  const nearLimit = count >= max * 0.8;
+  const tone = atLimit ? "bg-red-400" : nearLimit ? "bg-amber-400" : "bg-gold-400";
+
+  return (
+    <Card className={atLimit ? "border-red-200 bg-red-50/50" : nearLimit ? "border-amber-200 bg-amber-50/50" : ""}>
+      <CardContent className="space-y-2 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm text-slate-600">
+            <span className="font-medium text-slate-900">{count}/{max}</span> convidados do plano Free
+          </p>
+          {nearLimit && (
+            <Link href="/settings">
+              <Button variant="gold" size="sm">
+                <Crown className="h-4 w-4" /> Convidados ilimitados no Pro
+              </Button>
+            </Link>
+          )}
+        </div>
+        <div
+          className="h-2 w-full overflow-hidden rounded-full bg-slate-100"
+          role="progressbar"
+          aria-valuenow={count}
+          aria-valuemin={0}
+          aria-valuemax={max}
+          aria-label="Uso do limite de convidados do plano Free"
+        >
+          <div className={`h-full rounded-full transition-all duration-300 ${tone}`} style={{ width: `${pct}%` }} />
+        </div>
+        {atLimit && (
+          <p className="text-xs text-red-600">
+            Você atingiu o limite do plano Free. Faça upgrade para adicionar mais convidados.
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function GuestDialog({
-  open, onOpenChange, editing, onSave, pending,
+  open, onOpenChange, editing, onSave, pending, error,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   editing: Guest | null;
   onSave: (body: object) => void;
   pending: boolean;
+  error: string | null;
 }) {
   const [name, setName] = useState(editing?.name ?? "");
   const [email, setEmail] = useState(editing?.email ?? "");
@@ -228,6 +291,7 @@ function GuestDialog({
           </div>
           <div><Label htmlFor="d">Restrições alimentares</Label><Input id="d" value={dietary} onChange={(e) => setDietary(e.target.value)} /></div>
           <div><Label htmlFor="not">Notas</Label><Textarea id="not" value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+          {error && <p role="alert" className="text-xs text-red-600">{error}</p>}
           <Button type="submit" variant="gold" className="w-full" disabled={pending}>{pending ? "Salvando…" : "Salvar"}</Button>
         </form>
       </DialogContent>

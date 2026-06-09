@@ -2,14 +2,15 @@ import { Plan, isPaidPlan, isPlan } from "./plans";
 
 /**
  * Limites quantitativos por plano. `Infinity` = ilimitado.
- * Fonte única de verdade para casamentos e membros do workspace.
+ * Fonte única de verdade para casamentos, membros do workspace e
+ * convidados por casamento.
  * Gestor: casamentos limitados a 5 (assessoria), membros ilimitados.
  */
 export const PLAN_LIMITS = {
-  free: { weddings: 1, members: 1 },
-  pro: { weddings: 2, members: 2 },
-  gestor: { weddings: 5, members: Infinity },
-} as const satisfies Record<Plan, { weddings: number; members: number }>;
+  free: { weddings: 1, members: 1, guests: 50 },
+  pro: { weddings: 2, members: 2, guests: Infinity },
+  gestor: { weddings: 5, members: Infinity, guests: Infinity },
+} as const satisfies Record<Plan, { weddings: number; members: number; guests: number }>;
 
 /** Normaliza plano desconhecido para "free" (fail-safe restritivo). */
 function limitsFor(plan: Plan | string): (typeof PLAN_LIMITS)[Plan] {
@@ -55,6 +56,16 @@ export function canCreateWedding(plan: Plan | string, currentCount: number): boo
 /** Teto de membros do workspace por plano: Free = 1, Pro = 2, Gestor = ilimitado. */
 export function maxWorkspaceMembers(plan: Plan | string): number {
   return limitsFor(plan).members;
+}
+
+/** Teto de convidados por casamento: Free = 50, planos pagos = ilimitado. */
+export function maxGuestsPerWedding(plan: Plan | string): number {
+  return limitsFor(plan).guests;
+}
+
+/** Limite de convidados por casamento (ver PLAN_LIMITS). */
+export function canAddGuest(plan: Plan | string, currentCount: number): boolean {
+  return currentCount < limitsFor(plan).guests;
 }
 
 /**
