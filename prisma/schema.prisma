@@ -210,6 +210,7 @@ model Guest {
   phone               String?
   rsvpStatus          String              @default("pending")
   rsvpToken           String              @unique @default(cuid())
+  companions          Int                 @default(0)
   dietaryRestrictions String?
   notes               String?
   weddingId           String

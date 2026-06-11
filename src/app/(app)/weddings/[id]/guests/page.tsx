@@ -1,38 +1,22 @@
 "use client";
 import { use, useMemo, useState } from "react";
 import Link from "next/link";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, Edit, Link2, Share2, Crown } from "lucide-react";
-import { apiFetch } from "@/lib/api";
 import { useActivePlan } from "@/lib/use-plan";
 import { maxGuestsPerWedding } from "@/lib/permissions";
+import { guestHooks, relationshipHooks } from "@/lib/hooks/guests";
+import type {
+  ApiGuest,
+  ApiRelationship,
+  GuestCreateInput,
+  RelationshipCreateInput,
+} from "@/types/api";
 import { Button } from "@/components/ui/button";
 import { Input, Select, Label, Textarea } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { RsvpStatus, RelType } from "@/lib/validation/enums";
-
-interface Guest {
-  id: string;
-  name: string;
-  email: string | null;
-  phone: string | null;
-  rsvpStatus: string;
-  rsvpToken: string;
-  dietaryRestrictions: string | null;
-  notes: string | null;
-  seat?: { id: string; number: number; table: { name: string } } | null;
-}
-
-interface Relationship {
-  id: string;
-  type: string;
-  guestId: string;
-  relatedId: string;
-  guest: { id: string; name: string };
-  related: { id: string; name: string };
-}
 
 const RSVP_OPTIONS = RsvpStatus.options;
 const REL_OPTIONS = RelType.options;
@@ -45,16 +29,9 @@ const STATUS_COLOR: Record<string, string> = {
 
 export default function GuestsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const qc = useQueryClient();
 
-  const { data: guests } = useQuery<Guest[]>({
-    queryKey: ["guests", id],
-    queryFn: () => apiFetch(`/api/weddings/${id}/guests`),
-  });
-  const { data: rels } = useQuery<Relationship[]>({
-    queryKey: ["rels", id],
-    queryFn: () => apiFetch(`/api/weddings/${id}/relationships`),
-  });
+  const { data: guests } = guestHooks.useList(id);
+  const { data: rels } = relationshipHooks.useList(id);
 
   const [filter, setFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
@@ -70,36 +47,33 @@ export default function GuestsPage({ params }: { params: Promise<{ id: string }>
   }, [guests, filter, search]);
 
   const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Guest | null>(null);
-  const [relOpen, setRelOpen] = useState<Guest | null>(null);
+  const [editing, setEditing] = useState<ApiGuest | null>(null);
+  const [relOpen, setRelOpen] = useState<ApiGuest | null>(null);
 
   function copyRsvp(token: string) {
     navigator.clipboard?.writeText(`${window.location.origin}/rsvp/${token}`);
   }
 
-  const save = useMutation({
-    mutationFn: (body: object) => {
-      if (editing) {
-        return apiFetch(`/api/weddings/${id}/guests/${editing.id}`, { method: "PUT", body: JSON.stringify(body) });
-      }
-      return apiFetch(`/api/weddings/${id}/guests`, { method: "POST", body: JSON.stringify(body) });
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["guests", id] });
-      setOpen(false); setEditing(null);
-    },
-  });
+  function closeDialog() {
+    setOpen(false);
+    setEditing(null);
+  }
+  const create = guestHooks.useCreate(id, { onSuccess: closeDialog });
+  const update = guestHooks.useUpdate(id, { onSuccess: closeDialog });
+  const remove = guestHooks.useDelete(id);
 
-  const remove = useMutation({
-    mutationFn: (gid: string) => apiFetch(`/api/weddings/${id}/guests/${gid}`, { method: "DELETE" }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["guests", id] }),
-  });
+  const saving = create.isPending || update.isPending;
+  const saveError = (editing ? update.error : create.error)?.message ?? null;
+  function resetSave() {
+    create.reset();
+    update.reset();
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-fade-up">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-3xl text-slate-900">Convidados</h1>
-        <Button variant="gold" onClick={() => { setEditing(null); save.reset(); setOpen(true); }}><Plus className="h-4 w-4" /> Novo</Button>
+        <Button variant="gold" onClick={() => { setEditing(null); resetSave(); setOpen(true); }}><Plus className="h-4 w-4" /> Novo</Button>
       </header>
 
       {guests && <GuestLimitBanner count={guests.length} />}
@@ -177,11 +151,11 @@ export default function GuestsPage({ params }: { params: Promise<{ id: string }>
 
       <GuestDialog
         open={open}
-        onOpenChange={(v) => { setOpen(v); if (!v) save.reset(); }}
+        onOpenChange={(v) => { setOpen(v); if (!v) resetSave(); }}
         editing={editing}
-        onSave={(body) => save.mutate(body)}
-        pending={save.isPending}
-        error={save.error?.message ?? null}
+        onSave={(body) => (editing ? update.mutate({ id: editing.id, data: body }) : create.mutate(body))}
+        pending={saving}
+        error={saveError}
       />
       {relOpen && (
         <RelationshipDialog
@@ -251,8 +225,8 @@ function GuestDialog({
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  editing: Guest | null;
-  onSave: (body: object) => void;
+  editing: ApiGuest | null;
+  onSave: (body: GuestCreateInput) => void;
   pending: boolean;
   error: string | null;
 }) {
@@ -273,7 +247,8 @@ function GuestDialog({
             e.preventDefault();
             onSave({
               name, email: email || undefined, phone: phone || undefined,
-              rsvpStatus: rsvp,
+              // coluna String no banco; o enum é validado pelo Zod no servidor
+              rsvpStatus: rsvp as GuestCreateInput["rsvpStatus"],
               dietaryRestrictions: dietary || undefined,
               notes: notes || undefined,
             });
@@ -302,32 +277,26 @@ function GuestDialog({
 function RelationshipDialog({
   guest, guests, rels, weddingId, onClose,
 }: {
-  guest: Guest;
-  guests: Guest[];
-  rels: Relationship[];
+  guest: ApiGuest;
+  guests: ApiGuest[];
+  rels: ApiRelationship[];
   weddingId: string;
   onClose: () => void;
 }) {
-  const qc = useQueryClient();
   const [type, setType] = useState<string>("friend");
   const [relatedId, setRelatedId] = useState<string>("");
 
-  const create = useMutation({
-    mutationFn: () =>
-      apiFetch(`/api/weddings/${weddingId}/relationships`, {
-        method: "POST",
-        body: JSON.stringify({ type, guestId: guest.id, relatedId }),
-      }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["rels", weddingId] });
-      setRelatedId("");
-    },
-  });
-  const remove = useMutation({
-    mutationFn: (rid: string) =>
-      apiFetch(`/api/weddings/${weddingId}/relationships/${rid}`, { method: "DELETE" }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["rels", weddingId] }),
-  });
+  const create = relationshipHooks.useCreate(weddingId, { onSuccess: () => setRelatedId("") });
+  const remove = relationshipHooks.useDelete(weddingId);
+
+  function submitRel() {
+    create.mutate({
+      // <select> nativo entrega string; o enum é validado pelo Zod no servidor
+      type: type as RelationshipCreateInput["type"],
+      guestId: guest.id,
+      relatedId,
+    });
+  }
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
@@ -347,7 +316,7 @@ function RelationshipDialog({
         </ul>
         <form
           className="grid grid-cols-[1fr_1fr_auto] gap-2"
-          onSubmit={(e) => { e.preventDefault(); if (relatedId) create.mutate(); }}
+          onSubmit={(e) => { e.preventDefault(); if (relatedId) submitRel(); }}
         >
           <Select value={relatedId} onChange={(e) => setRelatedId(e.target.value)} required>
             <option value="">Convidado…</option>

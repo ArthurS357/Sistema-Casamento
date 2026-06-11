@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 
 export default async function WeddingLayout({
@@ -10,8 +10,7 @@ export default async function WeddingLayout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  const user = await getAuthenticatedUser();
   const w = await prisma.wedding.findUnique({
     where: { id },
     select: { workspaceId: true },
@@ -19,7 +18,7 @@ export default async function WeddingLayout({
   if (!w) redirect("/dashboard");
   const member = await prisma.membership.findUnique({
     where: {
-      userId_workspaceId: { userId: session.user.id, workspaceId: w.workspaceId },
+      userId_workspaceId: { userId: user.id, workspaceId: w.workspaceId },
     },
     select: { id: true },
   });

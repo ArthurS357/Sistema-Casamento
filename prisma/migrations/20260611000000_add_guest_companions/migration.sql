@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Guest" ADD COLUMN "companions" INTEGER NOT NULL DEFAULT 0;
