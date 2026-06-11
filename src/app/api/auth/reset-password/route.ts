@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { hashPassword } from "@/lib/auth/password";
 import { errorResponse, AuthError } from "@/lib/auth/guards";
+import { authLimiter, enforceRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const schema = z.object({
@@ -11,6 +12,11 @@ const schema = z.object({
 /** POST /api/auth/reset-password — valida token e altera senha */
 export async function POST(req: Request) {
   try {
+    // Auditoria S3: contém brute-force de tokens (5 tentativas/60s por IP),
+    // mesmo padrão das rotas vizinhas (forgot-password/register).
+    const limited = await enforceRateLimit(req, authLimiter, "reset-password");
+    if (limited) return limited;
+
     const body = await req.json();
     const { token, password } = schema.parse(body);
 

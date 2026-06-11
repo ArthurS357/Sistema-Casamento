@@ -48,16 +48,26 @@ export async function POST(req: Request) {
         const priceId = lineItems.data[0]?.price?.id;
         const plan = planForPriceId(priceId);
         if (!plan) {
+          // Price fora de STRIPE_PRICE_BY_PLAN: rejeita com 400. Libera a
+          // idempotência p/ o retry do Stripe passar caso o env seja corrigido.
           console.error(
-            `[stripe-webhook] checkout ${event.id} com price desconhecido (${priceId ?? "ausente"}) — ignorado`,
+            `[stripe-webhook] checkout ${event.id} com price desconhecido (${priceId ?? "ausente"}) — rejeitado`,
           );
-          break;
+          await prisma.processedStripeEvent
+            .delete({ where: { id: event.id } })
+            .catch(() => {});
+          return new Response("Unknown price", { status: 400 });
         }
         if (s.metadata?.plan && s.metadata.plan !== plan) {
           // Auditoria: divergência indica tentativa de manipulação do checkout.
-          console.warn(
-            `[stripe-webhook] checkout ${event.id}: metadata.plan (${s.metadata.plan}) diverge do preço pago (${plan}) — gravando o plano do preço`,
+          // Nada é gravado — operação rejeitada com 400.
+          console.error(
+            `[stripe-webhook] checkout ${event.id}: metadata.plan (${s.metadata.plan}) diverge do preço pago (${plan}) — operação rejeitada`,
           );
+          await prisma.processedStripeEvent
+            .delete({ where: { id: event.id } })
+            .catch(() => {});
+          return new Response("Plan mismatch", { status: 400 });
         }
         await prisma.workspace.update({
           where: { id: workspaceId },

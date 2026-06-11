@@ -41,6 +41,12 @@ export const authConfig: NextAuthConfig = {
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      // Auditoria D1: não persistir access_token/refresh_token em claro na
+      // tabela Account. A sessão é JWT e a app nunca chama APIs Google em nome
+      // do usuário — retornar {} mantém só provider/type/providerAccountId/userId.
+      account() {
+        return {};
+      },
     }),
     Credentials({
       credentials: {
