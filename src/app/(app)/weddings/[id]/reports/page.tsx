@@ -8,6 +8,7 @@ import { Download } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { PremiumGate } from "@/components/premium-gate";
 import { PremiumBlurGate } from "@/components/premium-blur-gate";
 import { formatBRL } from "@/lib/money";
 
@@ -51,10 +52,12 @@ export default function ReportsPage({ params }: { params: Promise<{ id: string }
     <div className="max-w-6xl mx-auto space-y-6">
       <header className="flex items-center justify-between">
         <h1 className="font-display text-3xl text-slate-900">Relatórios</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={exportExpensesCSV}><Download className="h-4 w-4" /> Despesas CSV</Button>
-          <Button variant="outline" onClick={exportGuestsCSV}><Download className="h-4 w-4" /> Convidados CSV</Button>
-        </div>
+        <PremiumGate feature="reports-export" fallback={null}>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={exportExpensesCSV}><Download className="h-4 w-4" /> Despesas CSV</Button>
+            <Button variant="outline" onClick={exportGuestsCSV}><Download className="h-4 w-4" /> Convidados CSV</Button>
+          </div>
+        </PremiumGate>
       </header>
 
       <div className="grid gap-4 md:grid-cols-4">

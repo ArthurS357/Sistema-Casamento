@@ -27,6 +27,15 @@ const FEATURES = {
       "Mesas de qualquer formato e capacidade",
     ],
   },
+  "reports-export": {
+    title: "Exportação de dados",
+    description: "Baixe a lista completa de convidados e finanças no plano Pro",
+    benefits: [
+      "Exporte convidados e RSVP em CSV",
+      "Exporte despesas por categoria em CSV",
+      "Leve seus dados para planilhas e fornecedores",
+    ],
+  },
 } satisfies Record<string, { title: string; description: string; benefits: string[] }>;
 
 export type PremiumFeature = keyof typeof FEATURES;
@@ -44,16 +53,24 @@ export type PremiumFeature = keyof typeof FEATURES;
  * Segurança: este gate é UX/conversão. O enforcement real continua
  * server-side nas rotas de API (plano verificado por requisição).
  *
+ * `fallback`: substitui o <Paywall> no estado Free. Use `fallback={null}`
+ * para gates inline (ex.: botões) onde o card de venda quebraria o layout
+ * e a feature deve apenas sumir. Default (omitido) mantém o <Paywall>.
+ *
  * Uso: <PremiumGate feature="gifts">…conteúdo premium…</PremiumGate>
  */
 export function PremiumGate({
   feature,
   children,
+  fallback,
 }: {
   feature: PremiumFeature;
   children: React.ReactNode;
+  fallback?: React.ReactNode;
 }) {
   const { isPremium } = useActivePlan();
-  if (isPremium === false) return <Paywall {...FEATURES[feature]} />;
+  if (isPremium === false) {
+    return <>{fallback !== undefined ? fallback : <Paywall {...FEATURES[feature]} />}</>;
+  }
   return <>{children}</>;
 }
