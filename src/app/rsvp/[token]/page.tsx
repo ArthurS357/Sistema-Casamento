@@ -1,6 +1,7 @@
 "use client";
 import { use, useEffect, useState } from "react";
-import { Check, X, PartyPopper } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
+import { Check, X, PartyPopper, TicketCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,6 +11,29 @@ interface Rsvp {
   rsvpStatus: string;
   dietaryRestrictions: string | null;
   wedding: { title: string; date: string };
+  checkInAvailable: boolean;
+}
+
+/**
+ * Ticket de check-in (feature Pro/Gestor): QR aponta para a rota
+ * autenticada /checkin/[token], escaneada pela recepção no dia do evento.
+ */
+function CheckInTicket({ token }: { token: string }) {
+  const checkInUrl = `${window.location.origin}/checkin/${token}`;
+  return (
+    <div className="mx-auto w-fit rounded-2xl border border-gold-200 bg-white shadow-sm overflow-hidden animate-fade-up">
+      <div className="flex items-center justify-center gap-2 bg-gold-50 px-6 py-2.5 border-b border-dashed border-gold-200">
+        <TicketCheck className="h-4 w-4 text-gold-600" />
+        <p className="uppercase tracking-[0.2em] text-[11px] text-gold-600">Seu ingresso</p>
+      </div>
+      <div className="p-5">
+        <QRCodeSVG value={checkInUrl} size={180} level="M" marginSize={1} />
+      </div>
+      <p className="px-6 pb-4 text-xs text-slate-500">
+        Apresente este QR Code na entrada do evento.
+      </p>
+    </div>
+  );
 }
 
 export default function RsvpPage({ params }: { params: Promise<{ token: string }> }) {
@@ -80,6 +104,7 @@ export default function RsvpPage({ params }: { params: Promise<{ token: string }
                 ? `Mal podemos esperar para celebrar com você, ${data.name.split(" ")[0]}.`
                 : "Sentiremos sua falta. Obrigado por avisar."}
             </p>
+            {done === "confirmed" && data.checkInAvailable && <CheckInTicket token={token} />}
           </div>
         )}
 
@@ -132,6 +157,13 @@ export default function RsvpPage({ params }: { params: Promise<{ token: string }
                 <X className="h-5 w-5" /> {sending === "declined" ? "Enviando…" : "Não poderei ir"}
               </Button>
             </div>
+
+            {data.rsvpStatus === "confirmed" && data.checkInAvailable && (
+              <div className="space-y-3 pt-2">
+                <p className="text-sm text-slate-500">Sua presença já está confirmada. Este é o seu ingresso:</p>
+                <CheckInTicket token={token} />
+              </div>
+            )}
           </div>
         )}
       </div>
