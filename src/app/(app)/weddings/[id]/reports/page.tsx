@@ -8,6 +8,7 @@ import { Download } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { PremiumBlurGate } from "@/components/premium-blur-gate";
 import { formatBRL } from "@/lib/money";
 
 interface Report {
@@ -75,6 +76,11 @@ export default function ReportsPage({ params }: { params: Promise<{ id: string }
         </CardContent></Card>
       </div>
 
+      <PremiumBlurGate
+        title="Relatórios completos"
+        description="Visualize gráficos por categoria, previsto vs. pago, RSVP e próximos vencimentos do seu casamento."
+      >
+      <div className="space-y-6">
       <div className="grid gap-4 lg:grid-cols-2">
         <Card><CardContent>
           <h3 className="font-semibold mb-3">Por categoria</h3>
@@ -128,6 +134,8 @@ export default function ReportsPage({ params }: { params: Promise<{ id: string }
           </ul>
         </CardContent></Card>
       </div>
+      </div>
+      </PremiumBlurGate>
     </div>
   );
 }
