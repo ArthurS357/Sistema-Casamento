@@ -8,6 +8,7 @@ import { Input, Select, Label } from "@/components/ui/input";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatBRL } from "@/lib/money";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ExpenseCategory } from "@/lib/validation/enums";
 
 interface Expense {
@@ -178,7 +179,13 @@ function ExpenseRow({
         {expense.dueDate ? new Date(expense.dueDate).toLocaleDateString("pt-BR") : "—"}
       </td>
       <td className="p-3">
-        <Button variant="ghost" size="icon" onClick={onDelete} aria-label="Excluir"><Trash2 className="h-4 w-4 text-red-500" /></Button>
+        <ConfirmDialog
+          title="Excluir despesa"
+          description={`Remover "${expense.description || expense.category}" do orçamento? Esta ação não pode ser desfeita.`}
+          onConfirm={onDelete}
+        >
+          <Button variant="ghost" size="icon" aria-label="Excluir"><Trash2 className="h-4 w-4 text-red-500" /></Button>
+        </ConfirmDialog>
       </td>
     </tr>
   );
