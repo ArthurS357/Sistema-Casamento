@@ -17,6 +17,7 @@ import { formatBRL } from "@/lib/money";
 import { canManageMultipleWeddings, requiresUpgradeBanner, canCreateWedding } from "@/lib/permissions";
 import { WorkspaceMembers } from "@/components/dashboard/workspace-members";
 import { UpgradeBanner } from "@/components/dashboard/upgrade-banner";
+import { ManagerDashboard } from "@/components/dashboard/manager-dashboard";
 
 interface Wedding {
   id: string;
@@ -121,6 +122,9 @@ export default function DashboardPage() {
             : "Aqui está o resumo do seu casamento e atividades."}
         </p>
       </header>
+
+      {/* ── Visão de carteira (exclusiva do plano Gestor) ── */}
+      {canManageMultipleWeddings(plan) && <ManagerDashboard />}
 
       {/* ── Section heading ── */}
       <div

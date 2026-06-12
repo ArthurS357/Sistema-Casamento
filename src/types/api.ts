@@ -66,6 +66,37 @@ export type AnalyticsPayload = {
   vendors: { fornecedor: string; contratos: number; pendencias: number }[];
 };
 
+/**
+ * GET /api/workspaces/portfolio — visão de carteira do plano Gestor:
+ * métricas agregadas de todos os casamentos do workspace ativo.
+ * Valores monetários em centavos (convenção src/lib/money.ts).
+ */
+export type PortfolioPayload = {
+  /** Próximos eventos (date >= hoje), ordenados pela data. */
+  weddings: {
+    id: string;
+    title: string;
+    /** ISO string (Date serializada). */
+    date: string;
+    partner1Name: string | null;
+    partner2Name: string | null;
+    /** Convidados com rsvpStatus "pending". */
+    pendingRsvps: number;
+    /** Saldo devedor com vencimento nos próximos 7 dias, em centavos. */
+    dueSoonCents: number;
+  }[];
+  totals: {
+    /** Casamentos com data futura no workspace. */
+    activeWeddings: number;
+    /** Soma do saldo devedor a vencer nos próximos 7 dias (workspace inteiro). */
+    dueSoonCents: number;
+    /** Lançamentos a vencer nos próximos 7 dias. */
+    dueSoonCount: number;
+    /** RSVPs pendentes somando todos os casamentos. */
+    pendingRsvps: number;
+  };
+};
+
 /** Payload aceito pelo POST de convidados (lado de entrada do Zod, pré-coerção). */
 export type GuestCreateInput = z.input<typeof GuestCreateSchema>;
 
