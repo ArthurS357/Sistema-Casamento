@@ -1,7 +1,7 @@
 "use client";
 import { use, useMemo, useState } from "react";
 import Link from "next/link";
-import { Plus, Trash2, Edit, Link2, Share2, Crown } from "lucide-react";
+import { Plus, Trash2, Edit, Link2, Share2, Crown, HelpCircle, Sparkles } from "lucide-react";
 import { useActivePlan } from "@/lib/use-plan";
 import { maxGuestsPerWedding } from "@/lib/permissions";
 import { guestHooks, relationshipHooks } from "@/lib/hooks/guests";
@@ -17,7 +17,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { RsvpStatus, RelType } from "@/lib/validation/enums";
+import { RSVP_LABELS, labelFor } from "@/lib/labels";
+import { toast } from "sonner";
 
 const RSVP_OPTIONS = RsvpStatus.options;
 const REL_OPTIONS = RelType.options;
@@ -59,8 +62,12 @@ export default function GuestsPage({ params }: { params: Promise<{ id: string }>
     setOpen(false);
     setEditing(null);
   }
-  const create = guestHooks.useCreate(id, { onSuccess: closeDialog });
-  const update = guestHooks.useUpdate(id, { onSuccess: closeDialog });
+  const create = guestHooks.useCreate(id, {
+    onSuccess: () => { closeDialog(); toast.success("Convidado adicionado."); },
+  });
+  const update = guestHooks.useUpdate(id, {
+    onSuccess: () => { closeDialog(); toast.success("Convidado atualizado."); },
+  });
   const remove = guestHooks.useDelete(id);
 
   const saving = create.isPending || update.isPending;
@@ -83,7 +90,7 @@ export default function GuestsPage({ params }: { params: Promise<{ id: string }>
         <Input placeholder="Buscar por nome ou email…" value={search} onChange={(e) => setSearch(e.target.value)} className="md:max-w-sm" />
         <Select value={filter} onChange={(e) => setFilter(e.target.value)} className="md:max-w-xs">
           <option value="all">Todos status</option>
-          {RSVP_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+          {RSVP_OPTIONS.map((s) => <option key={s} value={s}>{labelFor(RSVP_LABELS, s)}</option>)}
         </Select>
       </CardContent></Card>
 
@@ -93,7 +100,23 @@ export default function GuestsPage({ params }: { params: Promise<{ id: string }>
             <tr>
               <th className="text-left p-3">Nome</th>
               <th className="text-left p-3">Contato</th>
-              <th className="text-left p-3">RSVP</th>
+              <th className="text-left p-3">
+                <span className="inline-flex items-center gap-1">
+                  RSVP
+                  <TooltipProvider delayDuration={150}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button type="button" aria-label="O que significa RSVP?" className="text-slate-400 hover:text-slate-600">
+                          <HelpCircle className="h-3.5 w-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <strong>RSVP</strong> — Responda Por Favor (<em>Répondez s&apos;il vous plaît</em>). Indica se o convidado confirmou presença.
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </span>
+              </th>
               <th className="text-left p-3">Assento</th>
               <th className="p-3" />
             </tr>
@@ -114,7 +137,7 @@ export default function GuestsPage({ params }: { params: Promise<{ id: string }>
                 <td className="p-3 font-medium">{g.name}</td>
                 <td className="p-3 text-slate-500">{g.email ?? g.phone ?? "—"}</td>
                 <td className="p-3">
-                  <span className={`px-2 py-1 rounded-full text-xs ${STATUS_COLOR[g.rsvpStatus] ?? ""}`}>{g.rsvpStatus}</span>
+                  <span className={`px-2 py-1 rounded-full text-xs ${STATUS_COLOR[g.rsvpStatus] ?? ""}`}>{labelFor(RSVP_LABELS, g.rsvpStatus)}</span>
                 </td>
                 <td className="p-3 text-slate-500">
                   {g.seat ? `${g.seat.table.name} #${g.seat.number}` : "—"}
@@ -126,7 +149,7 @@ export default function GuestsPage({ params }: { params: Promise<{ id: string }>
                   <ConfirmDialog
                     title="Excluir convidado"
                     description={`Remover ${g.name} da lista? Esta ação não pode ser desfeita.`}
-                    onConfirm={() => remove.mutate(g.id)}
+                    onConfirm={() => remove.mutate(g.id, { onSuccess: () => toast.success("Convidado removido.") })}
                   >
                     <Button variant="ghost" size="icon" aria-label="Excluir"><Trash2 className="h-4 w-4 text-red-500" /></Button>
                   </ConfirmDialog>
@@ -237,6 +260,7 @@ function GuestDialog({
   pending: boolean;
   error: string | null;
 }) {
+  const { isPremium } = useActivePlan();
   const [name, setName] = useState(editing?.name ?? "");
   const [email, setEmail] = useState(editing?.email ?? "");
   const [phone, setPhone] = useState(editing?.phone ?? "");
@@ -246,8 +270,15 @@ function GuestDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>{editing ? "Editar convidado" : "Novo convidado"}</DialogTitle></DialogHeader>
+      <DialogContent className={isPremium ? "border-gold-200 bg-gradient-to-b from-gold-50/50 to-white" : undefined}>
+        <DialogHeader>
+          {isPremium && (
+            <span className="mb-2 inline-flex w-fit items-center gap-1.5 rounded-full bg-slate-900 px-2.5 py-0.5 text-[11px] font-medium text-gold-300">
+              <Sparkles className="h-3 w-3" /> Convidado premium
+            </span>
+          )}
+          <DialogTitle>{editing ? "Editar convidado" : "Novo convidado"}</DialogTitle>
+        </DialogHeader>
         <form
           className="space-y-3"
           onSubmit={(e) => {
@@ -268,7 +299,7 @@ function GuestDialog({
           </div>
           <div><Label htmlFor="r">RSVP</Label>
             <Select id="r" value={rsvp} onChange={(e) => setRsvp(e.target.value)}>
-              {RSVP_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+              {RSVP_OPTIONS.map((s) => <option key={s} value={s}>{labelFor(RSVP_LABELS, s)}</option>)}
             </Select>
           </div>
           <div><Label htmlFor="d">Restrições alimentares</Label><Input id="d" value={dietary} onChange={(e) => setDietary(e.target.value)} /></div>

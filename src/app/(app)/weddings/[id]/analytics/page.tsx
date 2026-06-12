@@ -52,6 +52,7 @@ export default function AnalyticsPage({ params }: { params: Promise<{ id: string
   if (!hasAccess) {
     return (
       <Paywall
+        tier="gestor"
         title="Dashboard Analítico"
         description="Exclusivo do plano Gestor: acompanhe engajamento dos convidados, projeção de custos e o status de cada fornecedor em um só lugar."
         benefits={[

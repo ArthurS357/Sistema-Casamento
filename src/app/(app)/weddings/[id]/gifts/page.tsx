@@ -15,6 +15,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { formatBRL } from "@/lib/money";
 import { useActivePlan } from "@/lib/use-plan";
 import { Paywall } from "@/components/paywall";
+import { toast } from "sonner";
 
 interface Gift {
   id: string;
@@ -48,7 +49,6 @@ export default function GiftsAdminPage({ params }: { params: Promise<{ id: strin
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Gift | null>(null);
-  const [copied, setCopied] = useState(false);
 
   const save = useMutation({
     mutationFn: (body: object) =>
@@ -59,12 +59,18 @@ export default function GiftsAdminPage({ params }: { params: Promise<{ id: strin
       qc.invalidateQueries({ queryKey: ["gifts", id] });
       setOpen(false);
       setEditing(null);
+      toast.success("Presente salvo.");
     },
+    onError: (e: Error) => toast.error(e.message || "Não foi possível salvar o presente."),
   });
 
   const remove = useMutation({
     mutationFn: (gid: string) => apiFetch(`/api/weddings/${id}/gifts/${gid}`, { method: "DELETE" }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["gifts", id] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["gifts", id] });
+      toast.success("Presente removido.");
+    },
+    onError: (e: Error) => toast.error(e.message || "Não foi possível remover o presente."),
   });
 
   const togglePurchased = useMutation({
@@ -78,8 +84,7 @@ export default function GiftsAdminPage({ params }: { params: Promise<{ id: strin
 
   function copyPublicLink() {
     navigator.clipboard?.writeText(`${window.location.origin}/gift/${id}`);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    toast.success("Link copiado!");
   }
 
   if (isPremium === false) {
@@ -105,8 +110,7 @@ export default function GiftsAdminPage({ params }: { params: Promise<{ id: strin
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={copyPublicLink}>
-            {copied ? <Check className="h-4 w-4 text-money-600" /> : <Copy className="h-4 w-4" />}
-            {copied ? "Copiado!" : "Copiar link"}
+            <Copy className="h-4 w-4" /> Copiar link
           </Button>
           <a href={`/gift/${id}`} target="_blank" rel="noreferrer">
             <Button variant="outline"><ExternalLink className="h-4 w-4" /> Ver página</Button>
@@ -187,7 +191,6 @@ export default function GiftsAdminPage({ params }: { params: Promise<{ id: strin
 function PixKeyCard({ weddingId, pixKey, loading }: { weddingId: string; pixKey: string | null; loading: boolean }) {
   const qc = useQueryClient();
   const [value, setValue] = useState(pixKey ?? "");
-  const [saved, setSaved] = useState(false);
 
   useEffect(() => { setValue(pixKey ?? ""); }, [pixKey]);
 
@@ -199,9 +202,9 @@ function PixKeyCard({ weddingId, pixKey, loading }: { weddingId: string; pixKey:
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["wedding", weddingId] });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      toast.success("Chave PIX salva.");
     },
+    onError: (e: Error) => toast.error(e.message || "Não foi possível salvar a chave PIX."),
   });
 
   return (
@@ -226,8 +229,7 @@ function PixKeyCard({ weddingId, pixKey, loading }: { weddingId: string; pixKey:
             aria-label="Chave PIX"
           />
           <Button type="submit" variant="gold" disabled={save.isPending || loading} className="sm:w-auto">
-            {saved ? <Check className="h-4 w-4" /> : null}
-            {save.isPending ? "Salvando…" : saved ? "Salvo!" : "Salvar chave"}
+            {save.isPending ? "Salvando…" : "Salvar chave"}
           </Button>
         </form>
       </CardContent>

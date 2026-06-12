@@ -12,7 +12,9 @@ import { Input, Select, Label } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { TableShape } from "@/lib/validation/enums";
+import { TABLE_SHAPE_LABELS, labelFor } from "@/lib/labels";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { useActivePlan } from "@/lib/use-plan";
 import { Paywall } from "@/components/paywall";
 
@@ -121,9 +123,12 @@ export default function TablesPage({ params }: { params: Promise<{ id: string }>
             <Card key={t.id}>
               <CardContent>
                 <header className="flex items-center justify-between mb-3">
-                  <div>
-                    <h3 className="font-display text-lg">{t.name}</h3>
-                    <p className="text-xs text-slate-400">{t.shape} · {t.capacity} lugares</p>
+                  <div className="flex items-center gap-3">
+                    <TableShapeGlyph shape={t.shape} />
+                    <div>
+                      <h3 className="font-display text-lg">{t.name}</h3>
+                      <p className="text-xs text-slate-400">{labelFor(TABLE_SHAPE_LABELS, t.shape)} · {t.capacity} lugares</p>
+                    </div>
                   </div>
                   <DeleteTableButton weddingId={id} tableId={t.id} tableName={t.name} />
                 </header>
@@ -157,6 +162,23 @@ export default function TablesPage({ params }: { params: Promise<{ id: string }>
         </div>
       </DndContext>
     </div>
+  );
+}
+
+/** Prévia visual do formato da mesa (refinamento Pro/Gestor). */
+function TableShapeGlyph({ shape }: { shape: string }) {
+  const map: Record<string, string> = {
+    round: "h-9 w-9 rounded-full",
+    square: "h-9 w-9 rounded-md",
+    rectangle: "h-7 w-12 rounded-md",
+    imperial: "h-5 w-12 rounded-sm",
+    "u-shape": "h-9 w-9 rounded-t-full border-b-0",
+  };
+  return (
+    <div
+      className={cn("shrink-0 border-2 border-gold-300 bg-gold-50", map[shape] ?? "h-9 w-9 rounded-md")}
+      aria-hidden
+    />
   );
 }
 
@@ -199,7 +221,9 @@ function NewTableButton({ weddingId }: { weddingId: string }) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tables", weddingId] });
       setOpen(false); setName(""); setCapacity("8");
+      toast.success("Mesa criada.");
     },
+    onError: (e: Error) => toast.error(e.message || "Não foi possível criar a mesa."),
   });
 
   return (
@@ -211,7 +235,7 @@ function NewTableButton({ weddingId }: { weddingId: string }) {
           <div><Label htmlFor="n">Nome</Label><Input id="n" required value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div><Label htmlFor="s">Formato</Label>
             <Select id="s" value={shape} onChange={(e) => setShape(e.target.value)}>
-              {SHAPE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+              {SHAPE_OPTIONS.map((s) => <option key={s} value={s}>{labelFor(TABLE_SHAPE_LABELS, s)}</option>)}
             </Select>
           </div>
           <div><Label htmlFor="c">Capacidade</Label>
@@ -231,7 +255,9 @@ function DeleteTableButton({ weddingId, tableId, tableName }: { weddingId: strin
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tables", weddingId] });
       qc.invalidateQueries({ queryKey: ["guests", weddingId] });
+      toast.success("Mesa removida.");
     },
+    onError: (e: Error) => toast.error(e.message || "Não foi possível remover a mesa."),
   });
   return (
     <ConfirmDialog

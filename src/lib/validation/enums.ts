@@ -4,7 +4,7 @@ import { PLANS } from "@/lib/plans";
 export const RsvpStatus = z.enum(["pending", "confirmed", "declined", "maybe"]);
 export type RsvpStatus = z.infer<typeof RsvpStatus>;
 
-export const TableShape = z.enum(["round", "square", "rectangle"]);
+export const TableShape = z.enum(["round", "square", "rectangle", "imperial", "u-shape"]);
 export type TableShape = z.infer<typeof TableShape>;
 
 export const RelType = z.enum(["friend", "family", "colleague", "conflict", "couple"]);

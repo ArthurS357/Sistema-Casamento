@@ -12,12 +12,14 @@ import { Input, Label } from "@/components/ui/input";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { NameInput } from "@/components/ui/name-input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatBRL } from "@/lib/money";
 import { canManageMultipleWeddings, requiresUpgradeBanner, canCreateWedding } from "@/lib/permissions";
 import { WorkspaceMembers } from "@/components/dashboard/workspace-members";
 import { UpgradeBanner } from "@/components/dashboard/upgrade-banner";
 import { ManagerDashboard } from "@/components/dashboard/manager-dashboard";
+import { SetupChecklist } from "@/components/dashboard/setup-checklist";
+import { toast } from "sonner";
 
 interface Wedding {
   id: string;
@@ -71,13 +73,16 @@ export default function DashboardPage() {
       qc.invalidateQueries({ queryKey: ["weddings"] });
       setOpen(false);
       setTitle(""); setDate(undefined); setBudget(undefined); setPartner1(""); setPartner2("");
+      toast.success("Casamento criado com sucesso!");
     },
+    onError: (e: Error) => toast.error(e.message || "Não foi possível criar o casamento."),
   });
 
   const isLoading = loadingWs || loadingWeddings;
   const plan = workspace?.plan || "free";
   const canCreate = !!weddings && canCreateWedding(plan, weddings.length);
   const firstName = session?.user?.name?.split(" ")[0] ?? null;
+  const isFreeEmpty = plan === "free" && !!weddings && weddings.length === 0;
 
   if (isLoading) {
     return (
@@ -126,7 +131,11 @@ export default function DashboardPage() {
       {/* ── Visão de carteira (exclusiva do plano Gestor) ── */}
       {canManageMultipleWeddings(plan) && <ManagerDashboard />}
 
+      {/* ── Onboarding: Free sem casamentos (roteiro em vez de painel vazio) ── */}
+      {isFreeEmpty && <SetupChecklist onCreateWedding={() => setOpen(true)} />}
+
       {/* ── Section heading ── */}
+      {!isFreeEmpty && (
       <div
         className="flex items-center justify-between animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both"
         style={{ animationDelay: "160ms" }}
@@ -135,8 +144,10 @@ export default function DashboardPage() {
           {canManageMultipleWeddings(plan) ? "Clientes / Casamentos" : "Seu Casamento"}
         </h2>
       </div>
+      )}
 
       {/* ── Wedding Grid ── */}
+      {!isFreeEmpty && (
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
         {weddings?.map((w, i) => (
           <Link key={w.id} href={`/weddings/${w.id}`}>
@@ -164,41 +175,20 @@ export default function DashboardPage() {
           </Link>
         ))}
 
-        {/* ── Add Wedding card ── */}
+        {/* ── Add Wedding card (abre o dialog controlado abaixo) ── */}
         {canCreate && (
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <button
-                type="button"
-                className="rounded-3xl border-2 border-dashed border-slate-200 bg-white/30 backdrop-blur-sm hover:bg-white/50 hover:border-gold-300 hover:-translate-y-1 transition-all duration-200 cursor-pointer animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both min-h-[140px] flex flex-col items-center justify-center gap-2 p-6 text-slate-400 hover:text-gold-500 group"
-                style={{ animationDelay: `${200 + (weddings?.length ?? 0) * 80}ms` }}
-                aria-label="Adicionar novo casamento"
-              >
-                <div className="grid h-10 w-10 place-items-center rounded-2xl border-2 border-dashed border-slate-200 group-hover:border-gold-300 transition-colors">
-                  <Plus className="h-5 w-5" />
-                </div>
-                <span className="text-sm font-medium">Novo Casamento</span>
-              </button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Novo casamento</DialogTitle></DialogHeader>
-              <form
-                className="space-y-4"
-                onSubmit={(e) => { e.preventDefault(); create.mutate(); }}
-              >
-                <div><Label htmlFor="t">Título</Label><Input id="t" required value={title} onChange={(e) => setTitle(e.target.value)} /></div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label htmlFor="p1">Noivo(a) 1</Label><NameInput id="p1" value={partner1} onValueChange={setPartner1} placeholder="Ex.: Ana" /></div>
-                  <div><Label htmlFor="p2">Noivo(a) 2</Label><NameInput id="p2" value={partner2} onValueChange={setPartner2} placeholder="Ex.: Bruno" /></div>
-                </div>
-                <div><Label>Data</Label><DatePicker value={date} onChange={setDate} /></div>
-                <div><Label htmlFor="b">Orçamento</Label><CurrencyInput id="b" value={budget} onChange={setBudget} placeholder="R$ 0,00" /></div>
-                <Button variant="gold" type="submit" disabled={create.isPending} className="w-full">
-                  {create.isPending ? "Criando…" : "Criar"}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="rounded-3xl border-2 border-dashed border-slate-200 bg-white/30 backdrop-blur-sm hover:bg-white/50 hover:border-gold-300 hover:-translate-y-1 transition-all duration-200 cursor-pointer animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both min-h-[140px] flex flex-col items-center justify-center gap-2 p-6 text-slate-400 hover:text-gold-500 group"
+            style={{ animationDelay: `${200 + (weddings?.length ?? 0) * 80}ms` }}
+            aria-label="Adicionar novo casamento"
+          >
+            <div className="grid h-10 w-10 place-items-center rounded-2xl border-2 border-dashed border-slate-200 group-hover:border-gold-300 transition-colors">
+              <Plus className="h-5 w-5" />
+            </div>
+            <span className="text-sm font-medium">Novo Casamento</span>
+          </button>
         )}
 
         {/* ── Empty state ── */}
@@ -212,6 +202,29 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+      )}
+
+      {/* ── Create Wedding Dialog (controlado; aberto pelo add-card ou pelo checklist) ── */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Novo casamento</DialogTitle></DialogHeader>
+          <form
+            className="space-y-4"
+            onSubmit={(e) => { e.preventDefault(); create.mutate(); }}
+          >
+            <div><Label htmlFor="t">Título</Label><Input id="t" required value={title} onChange={(e) => setTitle(e.target.value)} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label htmlFor="p1">Noivo(a) 1</Label><NameInput id="p1" value={partner1} onValueChange={setPartner1} placeholder="Ex.: Ana" /></div>
+              <div><Label htmlFor="p2">Noivo(a) 2</Label><NameInput id="p2" value={partner2} onValueChange={setPartner2} placeholder="Ex.: Bruno" /></div>
+            </div>
+            <div><Label>Data</Label><DatePicker value={date} onChange={setDate} /></div>
+            <div><Label htmlFor="b">Orçamento</Label><CurrencyInput id="b" value={budget} onChange={setBudget} placeholder="R$ 0,00" /></div>
+            <Button variant="gold" type="submit" disabled={create.isPending} className="w-full">
+              {create.isPending ? "Criando…" : "Criar"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Workspace Members ── */}
       <WorkspaceMembers plan={plan} />

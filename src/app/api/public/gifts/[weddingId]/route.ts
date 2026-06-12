@@ -19,6 +19,9 @@ export async function GET(req: Request, { params }: Params) {
       title: true,
       date: true,
       pixKey: true,
+      partner1Name: true,
+      partner2Name: true,
+      photoUrls: true,
       gifts: {
         orderBy: [{ isPurchased: "asc" }, { createdAt: "desc" }],
         select: {

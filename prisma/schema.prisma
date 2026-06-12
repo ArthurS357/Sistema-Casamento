@@ -155,6 +155,7 @@ model Wedding {
   partner1Name   String?             // nome do(a) noivo(a) 1 (opcional)
   partner2Name   String?             // nome do(a) noivo(a) 2 (opcional)
   pixKey         String?             // chave PIX recebedora dos noivos (lista de presentes)
+  photoUrls      String[]            @default([]) // até 5 fotos do casal exibidas no convite virtual público (/gift)
   workspaceId    String
   workspace      Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   guests         Guest[]

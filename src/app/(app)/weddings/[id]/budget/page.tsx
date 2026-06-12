@@ -10,6 +10,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatBRL } from "@/lib/money";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ExpenseCategory } from "@/lib/validation/enums";
+import { EXPENSE_CATEGORY_LABELS, labelFor } from "@/lib/labels";
+import { useActivePlan } from "@/lib/use-plan";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface Expense {
   id: string;
@@ -25,6 +29,7 @@ const CATEGORIES = ExpenseCategory.options;
 export default function BudgetPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const qc = useQueryClient();
+  const { isPremium } = useActivePlan();
 
   const { data: expenses } = useQuery<Expense[]>({
     queryKey: ["expenses", id],
@@ -38,7 +43,11 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
   const create = useMutation({
     mutationFn: (body: object) =>
       apiFetch(`/api/weddings/${id}/expenses`, { method: "POST", body: JSON.stringify(body) }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["expenses", id] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["expenses", id] });
+      toast.success("Despesa adicionada.");
+    },
+    onError: (e: Error) => toast.error(e.message || "Não foi possível adicionar a despesa."),
   });
   const update = useMutation({
     mutationFn: ({ eid, body }: { eid: string; body: object }) =>
@@ -48,7 +57,11 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
   const remove = useMutation({
     mutationFn: (eid: string) =>
       apiFetch(`/api/weddings/${id}/expenses/${eid}`, { method: "DELETE" }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["expenses", id] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["expenses", id] });
+      toast.success("Despesa removida.");
+    },
+    onError: (e: Error) => toast.error(e.message || "Não foi possível remover a despesa."),
   });
 
   const totals = (expenses ?? []).reduce(
@@ -57,6 +70,10 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
   );
   const budgetTotal = wedding?.budgetTotal ?? 0;
   const pct = budgetTotal > 0 ? Math.min(100, Math.round((totals.amount / budgetTotal) * 100)) : 0;
+  // Refinamento visual condicional para planos pagos (Pro/Gestor).
+  const premiumCard = isPremium
+    ? "border-gold-200 bg-gradient-to-br from-white to-gold-50/40 shadow-md shadow-gold-100/40"
+    : "";
 
   const [category, setCategory] = useState<string>("venue");
   const [description, setDescription] = useState("");
@@ -78,15 +95,15 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
       <h1 className="font-display text-3xl text-slate-900">Orçamento</h1>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card><CardContent>
+        <Card className={cn(premiumCard)}><CardContent>
           <p className="text-sm text-slate-500">Total previsto</p>
           <p className="text-2xl font-semibold text-money-600">{formatBRL(totals.amount)}</p>
         </CardContent></Card>
-        <Card><CardContent>
+        <Card className={cn(premiumCard)}><CardContent>
           <p className="text-sm text-slate-500">Total pago</p>
           <p className="text-2xl font-semibold text-money-700">{formatBRL(totals.paid)}</p>
         </CardContent></Card>
-        <Card><CardContent>
+        <Card className={cn(premiumCard)}><CardContent>
           <p className="text-sm text-slate-500">Orçamento</p>
           <p className="text-2xl font-semibold">{formatBRL(budgetTotal)}</p>
           <div className="mt-2 h-2 bg-slate-100 rounded overflow-hidden">
@@ -101,7 +118,7 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
           <div>
             <Label htmlFor="cat">Categoria</Label>
             <Select id="cat" value={category} onChange={(e) => setCategory(e.target.value)}>
-              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              {CATEGORIES.map((c) => <option key={c} value={c}>{labelFor(EXPENSE_CATEGORY_LABELS, c)}</option>)}
             </Select>
           </div>
           <div>
@@ -165,7 +182,7 @@ function ExpenseRow({
 
   return (
     <tr className="border-t border-slate-100">
-      <td className="p-3">{expense.category}</td>
+      <td className="p-3">{labelFor(EXPENSE_CATEGORY_LABELS, expense.category)}</td>
       <td className="p-3">
         <Input value={desc} onChange={(e) => setDesc(e.target.value)} onBlur={() => blur("description")} className="h-8" />
       </td>

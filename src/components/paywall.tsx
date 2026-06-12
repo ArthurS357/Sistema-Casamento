@@ -9,13 +9,17 @@ interface PaywallProps {
   description: string;
   /** Benefícios listados como destaque do plano pago. */
   benefits?: string[];
+  /** Plano-alvo do upgrade. Controla o selo e o CTA. Default "pro". */
+  tier?: "pro" | "gestor";
 }
 
 /**
  * Empty state de monetização. Renderizado no lugar da feature quando o
- * workspace ativo é Free, em vez de quebrar a página com erros 403.
+ * workspace ativo não tem o plano necessário, em vez de quebrar a página
+ * com erros 403. `tier` adequa o selo/CTA ao plano correto (Pro ou Gestor).
  */
-export function Paywall({ title, description, benefits = [] }: PaywallProps) {
+export function Paywall({ title, description, benefits = [], tier = "pro" }: PaywallProps) {
+  const tierLabel = tier === "gestor" ? "Gestor" : "PRO";
   return (
     <div className="max-w-2xl mx-auto animate-fade-up">
       <Card className="overflow-hidden bg-white/50 backdrop-blur-xl border-white/50 shadow-xl">
@@ -29,7 +33,7 @@ export function Paywall({ title, description, benefits = [] }: PaywallProps) {
           </div>
 
           <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-3 py-1 text-xs font-medium text-gold-300">
-            <Crown className="h-3.5 w-3.5" /> Recurso PRO
+            <Crown className="h-3.5 w-3.5" /> Recurso {tierLabel}
           </span>
 
           <h2 className="mt-4 font-display text-3xl text-slate-900">{title}</h2>
@@ -48,7 +52,7 @@ export function Paywall({ title, description, benefits = [] }: PaywallProps) {
 
           <Link href="/pricing" className="mt-8 inline-block w-full sm:w-auto">
             <Button variant="gold" size="lg" className="w-full sm:w-auto px-8 shadow-lg shadow-gold-200/50">
-              <Crown className="h-5 w-5" /> Fazer Upgrade para o PRO
+              <Crown className="h-5 w-5" /> Fazer Upgrade para o {tierLabel.toUpperCase()}
             </Button>
           </Link>
           <p className="mt-3 text-xs text-slate-400">Desbloqueie agora — leva menos de um minuto.</p>
