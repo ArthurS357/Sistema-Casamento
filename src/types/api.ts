@@ -36,6 +36,36 @@ export type ApiRelationship = Serialized<
   Prisma.GuestRelationshipGetPayload<{ include: { guest: true; related: true } }>
 >;
 
+/**
+ * GET /api/weddings/[id]/analytics — agregados do Dashboard Analítico
+ * (plano Gestor). Valores monetários em centavos (convenção src/lib/money.ts),
+ * exceto nas séries de gráfico (`costTimeline`), já convertidas para reais
+ * para casar com a escala dos eixos Recharts.
+ */
+export type AnalyticsPayload = {
+  rsvp: {
+    confirmed: number;
+    pending: number;
+    declined: number;
+    maybe: number;
+    total: number;
+  };
+  /** Evolução semanal: confirmações acumuladas x pendentes restantes. */
+  engagementTimeline: { week: string; confirmados: number; pendentes: number }[];
+  finance: {
+    /** Soma de Expense.amount (previsto), em centavos. */
+    plannedCents: number;
+    /** Soma de Expense.paid (realizado), em centavos. */
+    paidCents: number;
+    /** Saldo devedor de contas vencidas (dueDate < now e paid < amount), em centavos. */
+    overdueCents: number;
+  };
+  /** Acumulado mensal previsto x realizado, em reais (escala do gráfico). */
+  costTimeline: { mes: string; previsto: number; realizado: number }[];
+  /** Despesas agrupadas por categoria: contratos = lançamentos, pendências = não quitados. */
+  vendors: { fornecedor: string; contratos: number; pendencias: number }[];
+};
+
 /** Payload aceito pelo POST de convidados (lado de entrada do Zod, pré-coerção). */
 export type GuestCreateInput = z.input<typeof GuestCreateSchema>;
 

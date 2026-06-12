@@ -1,5 +1,6 @@
 "use client";
 import { use } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Area,
   AreaChart,
@@ -13,49 +14,28 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { TrendingUp, Users, Wallet, Store, Sparkles } from "lucide-react";
+import { AlertTriangle, Users, Wallet, Store, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Paywall } from "@/components/paywall";
 import { useActivePlan } from "@/lib/use-plan";
 import { canAccessManagerAnalytics } from "@/lib/permissions";
-
-// ─── Dados mockados (placeholder até a telemetria real) ────────────
-const engagementData = [
-  { week: "Sem 1", confirmados: 8, pendentes: 42 },
-  { week: "Sem 2", confirmados: 21, pendentes: 29 },
-  { week: "Sem 3", confirmados: 34, pendentes: 16 },
-  { week: "Sem 4", confirmados: 45, pendentes: 5 },
-] as const;
-
-const costProjectionData = [
-  { mes: "Jan", previsto: 12000, realizado: 9000 },
-  { mes: "Fev", previsto: 24000, realizado: 21000 },
-  { mes: "Mar", previsto: 38000, realizado: 35000 },
-  { mes: "Abr", previsto: 52000, realizado: 49000 },
-  { mes: "Mai", previsto: 64000, realizado: 58000 },
-] as const;
-
-const vendorData = [
-  { fornecedor: "Buffet", contratos: 1, pendencias: 0 },
-  { fornecedor: "Fotografia", contratos: 1, pendencias: 1 },
-  { fornecedor: "Decoração", contratos: 2, pendencias: 1 },
-  { fornecedor: "Música", contratos: 1, pendencias: 0 },
-  { fornecedor: "Cerimonial", contratos: 1, pendencias: 2 },
-] as const;
-
-const kpis = [
-  { label: "Convidados engajados", value: "76%", icon: Users, tone: "text-gold-500" },
-  { label: "Custo projetado", value: "R$ 64k", icon: Wallet, tone: "text-money-600" },
-  { label: "Fornecedores ativos", value: "6", icon: Store, tone: "text-slate-700" },
-  { label: "Saúde do evento", value: "Ótima", icon: TrendingUp, tone: "text-gold-500" },
-] as const;
+import { apiFetch } from "@/lib/api";
+import { formatBRL } from "@/lib/money";
+import type { AnalyticsPayload } from "@/types/api";
 
 export default function AnalyticsPage({ params }: { params: Promise<{ id: string }> }) {
-  use(params); // consome a promessa de params (rota dinâmica)
+  const { id } = use(params);
   const { plan, isLoading } = useActivePlan();
+  const hasAccess = plan !== undefined && canAccessManagerAnalytics(plan);
 
-  if (isLoading || plan === undefined) {
+  const { data, isLoading: isLoadingAnalytics, error } = useQuery<AnalyticsPayload>({
+    queryKey: ["analytics", id],
+    queryFn: () => apiFetch(`/api/weddings/${id}/analytics`),
+    enabled: hasAccess,
+  });
+
+  if (isLoading || plan === undefined || (hasAccess && isLoadingAnalytics)) {
     return (
       <div className="max-w-6xl mx-auto space-y-4">
         <Skeleton className="h-10 w-64" />
@@ -69,7 +49,7 @@ export default function AnalyticsPage({ params }: { params: Promise<{ id: string
     );
   }
 
-  if (!canAccessManagerAnalytics(plan)) {
+  if (!hasAccess) {
     return (
       <Paywall
         title="Dashboard Analítico"
@@ -83,6 +63,45 @@ export default function AnalyticsPage({ params }: { params: Promise<{ id: string
     );
   }
 
+  if (error || !data) {
+    return (
+      <div className="max-w-6xl mx-auto">
+        <p className="text-slate-500">
+          Não foi possível carregar as métricas. Tente novamente em instantes.
+        </p>
+      </div>
+    );
+  }
+
+  const confirmedPct =
+    data.rsvp.total > 0 ? Math.round((data.rsvp.confirmed / data.rsvp.total) * 100) : 0;
+  const kpis = [
+    {
+      label: "Convidados confirmados",
+      value: `${confirmedPct}%`,
+      icon: Users,
+      tone: "text-gold-500",
+    },
+    {
+      label: "Custo previsto",
+      value: formatBRL(data.finance.plannedCents),
+      icon: Wallet,
+      tone: "text-money-600",
+    },
+    {
+      label: "Fornecedores ativos",
+      value: String(data.vendors.length),
+      icon: Store,
+      tone: "text-slate-700",
+    },
+    {
+      label: "Contas em atraso",
+      value: formatBRL(data.finance.overdueCents),
+      icon: AlertTriangle,
+      tone: data.finance.overdueCents > 0 ? "text-red-500" : "text-money-600",
+    },
+  ];
+
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-fade-up">
       <header>
@@ -90,9 +109,7 @@ export default function AnalyticsPage({ params }: { params: Promise<{ id: string
           <Sparkles className="h-3.5 w-3.5" /> Gestor
         </span>
         <h1 className="mt-3 font-display text-4xl text-slate-900">Dashboard Analítico</h1>
-        <p className="text-slate-500 mt-1">
-          Métricas avançadas do casamento. Dados de demonstração — telemetria real em breve.
-        </p>
+        <p className="text-slate-500 mt-1">Métricas avançadas do casamento.</p>
       </header>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -113,7 +130,7 @@ export default function AnalyticsPage({ params }: { params: Promise<{ id: string
       <div className="grid gap-6 lg:grid-cols-2">
         <ChartCard title="Engajamento de Convidados" subtitle="Confirmações de RSVP por semana">
           <ResponsiveContainer width="100%" height={260}>
-            <AreaChart data={[...engagementData]} margin={{ left: -20, right: 8, top: 8 }}>
+            <AreaChart data={data.engagementTimeline} margin={{ left: -20, right: 8, top: 8 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
               <XAxis dataKey="week" tickLine={false} axisLine={false} fontSize={12} />
               <YAxis tickLine={false} axisLine={false} fontSize={12} />
@@ -124,9 +141,9 @@ export default function AnalyticsPage({ params }: { params: Promise<{ id: string
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Projeção de Custos" subtitle="Previsto x realizado (acumulado)">
+        <ChartCard title="Projeção de Custos" subtitle="Previsto x realizado (acumulado, R$)">
           <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={[...costProjectionData]} margin={{ left: -20, right: 8, top: 8 }}>
+            <LineChart data={data.costTimeline} margin={{ left: -20, right: 8, top: 8 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
               <XAxis dataKey="mes" tickLine={false} axisLine={false} fontSize={12} />
               <YAxis tickLine={false} axisLine={false} fontSize={12} />
@@ -139,11 +156,11 @@ export default function AnalyticsPage({ params }: { params: Promise<{ id: string
 
         <ChartCard
           title="Relatório de Fornecedores"
-          subtitle="Contratos e pendências por categoria"
+          subtitle="Lançamentos e pendências por categoria de despesa"
           className="lg:col-span-2"
         >
           <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={[...vendorData]} margin={{ left: -20, right: 8, top: 8 }}>
+            <BarChart data={data.vendors} margin={{ left: -20, right: 8, top: 8 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
               <XAxis dataKey="fornecedor" tickLine={false} axisLine={false} fontSize={12} />
               <YAxis tickLine={false} axisLine={false} fontSize={12} allowDecimals={false} />

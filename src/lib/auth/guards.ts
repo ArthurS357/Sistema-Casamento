@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { canAccessPremiumFeatures } from "@/lib/permissions";
+import { canAccessPremiumFeatures, canAccessManagerAnalytics } from "@/lib/permissions";
 import { enforceRateLimitFor, limiterForTier, type RateTier } from "@/lib/rate-limit";
 
 export class AuthError extends Error {
@@ -60,6 +60,17 @@ export async function requirePremiumWeddingFeature(weddingId: string): Promise<v
   const plan = await getWeddingPlan(weddingId);
   if (!canAccessPremiumFeatures(plan)) {
     throw new AuthError(403, "Recurso disponível apenas nos planos Pro e Gestor.");
+  }
+}
+
+/**
+ * Paywall server-side do Dashboard Analítico: exclusivo do plano Gestor
+ * (regra de negócio espelhada de canAccessManagerAnalytics, usada no client).
+ */
+export async function requireManagerAnalyticsFeature(weddingId: string): Promise<void> {
+  const plan = await getWeddingPlan(weddingId);
+  if (!canAccessManagerAnalytics(plan)) {
+    throw new AuthError(403, "Recurso disponível apenas no plano Gestor.");
   }
 }
 
