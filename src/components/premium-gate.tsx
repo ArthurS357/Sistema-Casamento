@@ -36,6 +36,16 @@ const FEATURES = {
       "Leve seus dados para planilhas e fornecedores",
     ],
   },
+  "fotos-casal": {
+    title: "Fotos do Convite",
+    description:
+      "Adicione até 5 fotos do casal ao convite virtual e deixe a página de presentes com a cara de vocês.",
+    benefits: [
+      "Upload de até 5 fotos do casal",
+      "Galeria elegante no convite público",
+      "Gerencie as fotos a qualquer momento",
+    ],
+  },
 } satisfies Record<string, { title: string; description: string; benefits: string[] }>;
 
 export type PremiumFeature = keyof typeof FEATURES;

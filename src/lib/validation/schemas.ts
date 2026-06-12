@@ -76,6 +76,8 @@ export const WeddingCreateSchema = z.object({
 export const WeddingUpdateSchema = WeddingCreateSchema.partial().extend({
   // null limpa a chave; string define; undefined mantém.
   pixKey: pixKeyOpt.nullable(),
+  // Fotos do casal no convite virtual: até 5 URLs (upload via Cloudinary).
+  photoUrls: z.array(z.string().url()).max(5).optional(),
 });
 
 export const GuestCreateSchema = z.object({

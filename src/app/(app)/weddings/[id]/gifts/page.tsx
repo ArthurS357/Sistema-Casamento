@@ -2,8 +2,9 @@
 import { use, useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Plus, Trash2, Edit, Gift as GiftIcon, Check, ExternalLink, Copy, KeyRound,
+  Plus, Trash2, Edit, Gift as GiftIcon, Check, ExternalLink, Copy, KeyRound, ImagePlus, X,
 } from "lucide-react";
+import { CldUploadWidget } from "next-cloudinary";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea, Label } from "@/components/ui/input";
@@ -15,6 +16,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { formatBRL } from "@/lib/money";
 import { useActivePlan } from "@/lib/use-plan";
 import { Paywall } from "@/components/paywall";
+import { PremiumGate } from "@/components/premium-gate";
 import { toast } from "sonner";
 
 interface Gift {
@@ -30,6 +32,7 @@ interface WeddingInfo {
   id: string;
   title: string;
   pixKey: string | null;
+  photoUrls: string[];
 }
 
 export default function GiftsAdminPage({ params }: { params: Promise<{ id: string }> }) {
@@ -122,6 +125,10 @@ export default function GiftsAdminPage({ params }: { params: Promise<{ id: strin
       </header>
 
       <PixKeyCard weddingId={id} pixKey={wedding?.pixKey ?? null} loading={!wedding} />
+
+      <PremiumGate feature="fotos-casal" fallback={null}>
+        <PhotoManagerCard weddingId={id} photoUrls={wedding?.photoUrls ?? []} loading={!wedding} />
+      </PremiumGate>
 
       {!gifts && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -232,6 +239,113 @@ function PixKeyCard({ weddingId, pixKey, loading }: { weddingId: string; pixKey:
             {save.isPending ? "Salvando…" : "Salvar chave"}
           </Button>
         </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Gestão das fotos do convite virtual (até 5). Upload client-side via
+ * Cloudinary (next-cloudinary); cada alteração persiste no banco com PATCH.
+ * O array é a fonte da verdade local, espelhado do servidor por useEffect.
+ */
+function PhotoManagerCard({
+  weddingId, photoUrls, loading,
+}: {
+  weddingId: string;
+  photoUrls: string[];
+  loading: boolean;
+}) {
+  const qc = useQueryClient();
+  const [photos, setPhotos] = useState<string[]>(photoUrls);
+
+  useEffect(() => { setPhotos(photoUrls); }, [photoUrls]);
+
+  const save = useMutation({
+    mutationFn: (next: string[]) =>
+      apiFetch(`/api/weddings/${weddingId}`, { method: "PATCH", body: JSON.stringify({ photoUrls: next }) }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["wedding", weddingId] });
+      toast.success("Fotos atualizadas.");
+    },
+    onError: (e: Error) => toast.error(e.message || "Não foi possível salvar as fotos."),
+  });
+
+  function persist(next: string[]) {
+    setPhotos(next);
+    save.mutate(next);
+  }
+  function addPhoto(url: string) {
+    if (photos.length >= 5 || photos.includes(url)) return;
+    persist([...photos, url]);
+  }
+  function removePhoto(url: string) {
+    persist(photos.filter((p) => p !== url));
+  }
+
+  const full = photos.length >= 5;
+  const preset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+  return (
+    <Card>
+      <CardContent>
+        <div className="flex items-center gap-2 mb-1">
+          <ImagePlus className="h-4 w-4 text-gold-500" />
+          <h2 className="font-medium text-slate-900">Fotos do convite</h2>
+          <span className="ml-auto text-xs text-slate-400">{photos.length}/5</span>
+        </div>
+        <p className="text-sm text-slate-500 mb-3">
+          Até 5 fotos do casal exibidas na página pública de presentes.
+        </p>
+
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
+          {photos.map((url) => (
+            <div key={url} className="group relative aspect-square overflow-hidden rounded-xl border border-slate-200">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={url} alt="Foto do casal" className="h-full w-full object-cover" />
+              <button
+                type="button"
+                onClick={() => removePhoto(url)}
+                disabled={save.isPending}
+                aria-label="Remover foto"
+                className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-slate-900/70 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-600 disabled:opacity-50"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+
+          {!full && (
+            <CldUploadWidget
+              uploadPreset={preset}
+              options={{ multiple: false, sources: ["local", "url", "camera"] }}
+              onSuccess={(result) => {
+                const info = result?.info;
+                if (info && typeof info === "object" && "secure_url" in info) {
+                  addPhoto(String(info.secure_url));
+                }
+              }}
+            >
+              {({ open }) => (
+                <button
+                  type="button"
+                  onClick={() => open()}
+                  disabled={loading || save.isPending || !preset}
+                  className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-slate-200 text-slate-400 transition-colors hover:border-gold-300 hover:text-gold-500 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <ImagePlus className="h-5 w-5" />
+                  <span className="text-xs font-medium">Adicionar</span>
+                </button>
+              )}
+            </CldUploadWidget>
+          )}
+        </div>
+
+        {!preset && (
+          <p className="mt-2 text-xs text-amber-600">
+            Configure <code>NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET</code> para habilitar o upload.
+          </p>
+        )}
       </CardContent>
     </Card>
   );
