@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input, Select, Label } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { TableShape } from "@/lib/validation/enums";
 import { cn } from "@/lib/utils";
 import { useActivePlan } from "@/lib/use-plan";
@@ -124,7 +125,7 @@ export default function TablesPage({ params }: { params: Promise<{ id: string }>
                     <h3 className="font-display text-lg">{t.name}</h3>
                     <p className="text-xs text-slate-400">{t.shape} · {t.capacity} lugares</p>
                   </div>
-                  <DeleteTableButton weddingId={id} tableId={t.id} />
+                  <DeleteTableButton weddingId={id} tableId={t.id} tableName={t.name} />
                 </header>
                 <ul className="space-y-1">
                   {t.seats.map((s) => {
@@ -223,7 +224,7 @@ function NewTableButton({ weddingId }: { weddingId: string }) {
   );
 }
 
-function DeleteTableButton({ weddingId, tableId }: { weddingId: string; tableId: string }) {
+function DeleteTableButton({ weddingId, tableId, tableName }: { weddingId: string; tableId: string; tableName: string }) {
   const qc = useQueryClient();
   const remove = useMutation({
     mutationFn: () => apiFetch(`/api/weddings/${weddingId}/tables/${tableId}`, { method: "DELETE" }),
@@ -233,8 +234,14 @@ function DeleteTableButton({ weddingId, tableId }: { weddingId: string; tableId:
     },
   });
   return (
-    <Button variant="ghost" size="icon" onClick={() => { if (confirm("Excluir mesa?")) remove.mutate(); }} aria-label="Excluir mesa">
-      <Trash2 className="h-4 w-4 text-red-500" />
-    </Button>
+    <ConfirmDialog
+      title="Excluir mesa"
+      description={`A mesa "${tableName}" e seus assentos serão removidos. Os convidados alocados ficarão sem lugar.`}
+      onConfirm={() => remove.mutate()}
+    >
+      <Button variant="ghost" size="icon" aria-label="Excluir mesa">
+        <Trash2 className="h-4 w-4 text-red-500" />
+      </Button>
+    </ConfirmDialog>
   );
 }

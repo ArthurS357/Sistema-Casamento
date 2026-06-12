@@ -11,6 +11,7 @@ import { CurrencyInput } from "@/components/ui/currency-input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { formatBRL } from "@/lib/money";
 import { useActivePlan } from "@/lib/use-plan";
 import { Paywall } from "@/components/paywall";
@@ -163,7 +164,13 @@ export default function GiftsAdminPage({ params }: { params: Promise<{ id: strin
                   </Button>
                   <div className="ml-auto flex gap-1">
                     <Button variant="ghost" size="icon" onClick={() => { setEditing(g); setOpen(true); }} aria-label="Editar"><Edit className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => remove.mutate(g.id)} aria-label="Excluir"><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                    <ConfirmDialog
+                      title="Excluir presente"
+                      description={`Remover "${g.title}" da lista de presentes? Esta ação não pode ser desfeita.`}
+                      onConfirm={() => remove.mutate(g.id)}
+                    >
+                      <Button variant="ghost" size="icon" aria-label="Excluir"><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                    </ConfirmDialog>
                   </div>
                 </div>
               </CardContent>

@@ -8,6 +8,7 @@ import { Input, Textarea, Select, Label } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { DatePicker } from "@/components/ui/date-picker";
 import { cn } from "@/lib/utils";
 import { TaskStatus } from "@/lib/validation/enums";
@@ -221,7 +222,13 @@ export default function TasksPage({ params }: { params: Promise<{ id: string }> 
                             </Button>
                             <div className="ml-auto flex gap-1">
                               <Button variant="ghost" size="icon" onClick={() => { setEditing(t); setOpen(true); }} aria-label="Editar"><Edit className="h-4 w-4" /></Button>
-                              <Button variant="ghost" size="icon" onClick={() => remove.mutate(t.id)} aria-label="Excluir"><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                              <ConfirmDialog
+                                title="Excluir tarefa"
+                                description={`Remover "${t.title}" do checklist? Esta ação não pode ser desfeita.`}
+                                onConfirm={() => remove.mutate(t.id)}
+                              >
+                                <Button variant="ghost" size="icon" aria-label="Excluir"><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                              </ConfirmDialog>
                             </div>
                           </div>
                         </CardContent>

@@ -16,6 +16,7 @@ import { Input, Select, Label, Textarea } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { RsvpStatus, RelType } from "@/lib/validation/enums";
 
 const RSVP_OPTIONS = RsvpStatus.options;
@@ -122,7 +123,13 @@ export default function GuestsPage({ params }: { params: Promise<{ id: string }>
                   <Button variant="ghost" size="icon" onClick={() => copyRsvp(g.rsvpToken)} aria-label="Copiar link de RSVP"><Share2 className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" onClick={() => setRelOpen(g)} aria-label="Relacionamentos"><Link2 className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" onClick={() => { setEditing(g); setOpen(true); }} aria-label="Editar"><Edit className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => remove.mutate(g.id)} aria-label="Excluir"><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                  <ConfirmDialog
+                    title="Excluir convidado"
+                    description={`Remover ${g.name} da lista? Esta ação não pode ser desfeita.`}
+                    onConfirm={() => remove.mutate(g.id)}
+                  >
+                    <Button variant="ghost" size="icon" aria-label="Excluir"><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                  </ConfirmDialog>
                 </td>
               </tr>
             ))}
@@ -309,7 +316,14 @@ function RelationshipDialog({
             return (
               <li key={r.id} className="flex items-center justify-between border border-slate-100 rounded p-2">
                 <span className="text-sm">{other.name} <span className="text-slate-400">— {r.type}</span></span>
-                <Button variant="ghost" size="icon" onClick={() => remove.mutate(r.id)} aria-label="Remover"><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                <ConfirmDialog
+                  title="Remover relacionamento"
+                  description={`Remover o vínculo com ${other.name}?`}
+                  confirmLabel="Remover"
+                  onConfirm={() => remove.mutate(r.id)}
+                >
+                  <Button variant="ghost" size="icon" aria-label="Remover"><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                </ConfirmDialog>
               </li>
             );
           })}
