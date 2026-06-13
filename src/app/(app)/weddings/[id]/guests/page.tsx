@@ -94,7 +94,8 @@ export default function GuestsPage({ params }: { params: Promise<{ id: string }>
         </Select>
       </CardContent></Card>
 
-      <Card><CardContent className="p-0 overflow-x-auto">
+      {/* Desktop: tabela completa. Mobile (< md) usa a lista de cards abaixo. */}
+      <Card className="hidden md:block"><CardContent className="p-0 overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-slate-600">
             <tr>
@@ -143,32 +144,20 @@ export default function GuestsPage({ params }: { params: Promise<{ id: string }>
                   {g.seat ? `${g.seat.table.name} #${g.seat.number}` : "—"}
                 </td>
                 <td className="p-3 flex gap-1 justify-end">
-                  <Button variant="ghost" size="icon" onClick={() => copyRsvp(g.rsvpToken)} aria-label="Copiar link de RSVP"><Share2 className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => setRelOpen(g)} aria-label="Relacionamentos"><Link2 className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => { setEditing(g); setOpen(true); }} aria-label="Editar"><Edit className="h-4 w-4" /></Button>
-                  <ConfirmDialog
-                    title="Excluir convidado"
-                    description={`Remover ${g.name} da lista? Esta ação não pode ser desfeita.`}
-                    onConfirm={() => remove.mutate(g.id, { onSuccess: () => toast.success("Convidado removido.") })}
-                  >
-                    <Button variant="ghost" size="icon" aria-label="Excluir"><Trash2 className="h-4 w-4 text-red-500" /></Button>
-                  </ConfirmDialog>
+                  <GuestActions
+                    guest={g}
+                    onCopy={() => copyRsvp(g.rsvpToken)}
+                    onRelationships={() => setRelOpen(g)}
+                    onEdit={() => { setEditing(g); setOpen(true); }}
+                    onDelete={() => remove.mutate(g.id, { onSuccess: () => toast.success("Convidado removido.") })}
+                  />
                 </td>
               </tr>
             ))}
             {guests && guests.length === 0 && (
               <tr>
                 <td colSpan={5} className="py-12 px-4 text-center">
-                  <div className="max-w-xs mx-auto space-y-3 animate-in fade-in slide-in-from-bottom-2">
-                    <div className="mx-auto w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                      <span className="text-xl text-slate-400">👋</span>
-                    </div>
-                    <h3 className="font-medium text-slate-900">Sua lista está vazia</h3>
-                    <p className="text-sm text-slate-500">Adicione convidados para começar a planejar os assentos e o RSVP.</p>
-                    <Button variant="outline" className="mt-4 w-full" onClick={() => { setEditing(null); setOpen(true); }}>
-                      Adicionar convidado
-                    </Button>
-                  </div>
+                  <EmptyGuests onAdd={() => { setEditing(null); setOpen(true); }} />
                 </td>
               </tr>
             )}
@@ -178,6 +167,70 @@ export default function GuestsPage({ params }: { params: Promise<{ id: string }>
           </tbody>
         </table>
       </CardContent></Card>
+
+      {/* Mobile (< md): cards empilhados no lugar da tabela */}
+      <div className="grid grid-cols-1 gap-4 md:hidden">
+        {!guests &&
+          Array.from({ length: 3 }).map((_, i) => (
+            <Card key={`skm-${i}`}>
+              <CardContent className="space-y-3 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-4 w-40" />
+                  </div>
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                </div>
+                <div className="border-t border-slate-100 pt-3">
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        {filtered.map((g) => (
+          <Card key={g.id}>
+            <CardContent className="space-y-3 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-slate-900">{g.name}</p>
+                  <p className="truncate text-sm text-slate-500">{g.email ?? g.phone ?? "—"}</p>
+                </div>
+                <span className={`shrink-0 rounded-full px-2 py-1 text-xs ${STATUS_COLOR[g.rsvpStatus] ?? ""}`}>
+                  {labelFor(RSVP_LABELS, g.rsvpStatus)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
+                <p className="text-sm text-slate-500">
+                  {g.seat ? `${g.seat.table.name} #${g.seat.number}` : "Sem mesa"}
+                </p>
+                <div className="flex shrink-0 gap-1">
+                  <GuestActions
+                    guest={g}
+                    onCopy={() => copyRsvp(g.rsvpToken)}
+                    onRelationships={() => setRelOpen(g)}
+                    onEdit={() => { setEditing(g); setOpen(true); }}
+                    onDelete={() => remove.mutate(g.id, { onSuccess: () => toast.success("Convidado removido.") })}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+        {guests && guests.length === 0 && (
+          <Card>
+            <CardContent className="px-4 py-12 text-center">
+              <EmptyGuests onAdd={() => { setEditing(null); setOpen(true); }} />
+            </CardContent>
+          </Card>
+        )}
+        {guests && guests.length > 0 && filtered.length === 0 && (
+          <Card>
+            <CardContent className="p-6 text-center text-sm text-slate-500">
+              Nenhum convidado encontrado na busca.
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       <GuestDialog
         open={open}
@@ -196,6 +249,48 @@ export default function GuestsPage({ params }: { params: Promise<{ id: string }>
           onClose={() => setRelOpen(null)}
         />
       )}
+    </div>
+  );
+}
+
+/** Ações por convidado, compartilhadas entre a linha da tabela (md+) e o card mobile. */
+function GuestActions({
+  guest, onCopy, onRelationships, onEdit, onDelete,
+}: {
+  guest: ApiGuest;
+  onCopy: () => void;
+  onRelationships: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <>
+      <Button variant="ghost" size="icon" onClick={onCopy} aria-label="Copiar link de RSVP"><Share2 className="h-4 w-4" /></Button>
+      <Button variant="ghost" size="icon" onClick={onRelationships} aria-label="Relacionamentos"><Link2 className="h-4 w-4" /></Button>
+      <Button variant="ghost" size="icon" onClick={onEdit} aria-label="Editar"><Edit className="h-4 w-4" /></Button>
+      <ConfirmDialog
+        title="Excluir convidado"
+        description={`Remover ${guest.name} da lista? Esta ação não pode ser desfeita.`}
+        onConfirm={onDelete}
+      >
+        <Button variant="ghost" size="icon" aria-label="Excluir"><Trash2 className="h-4 w-4 text-red-500" /></Button>
+      </ConfirmDialog>
+    </>
+  );
+}
+
+/** Estado vazio compartilhado entre a tabela (md+) e a lista de cards mobile. */
+function EmptyGuests({ onAdd }: { onAdd: () => void }) {
+  return (
+    <div className="max-w-xs mx-auto space-y-3 animate-in fade-in slide-in-from-bottom-2">
+      <div className="mx-auto w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+        <span className="text-xl text-slate-400">👋</span>
+      </div>
+      <h3 className="font-medium text-slate-900">Sua lista está vazia</h3>
+      <p className="text-sm text-slate-500">Adicione convidados para começar a planejar os assentos e o RSVP.</p>
+      <Button variant="outline" className="mt-4 w-full" onClick={onAdd}>
+        Adicionar convidado
+      </Button>
     </div>
   );
 }
