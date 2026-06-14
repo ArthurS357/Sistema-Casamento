@@ -1,9 +1,11 @@
 "use client";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { AnnouncementBanner } from "@/components/layout/announcement-banner";
 import { HelpFab } from "@/components/layout/help-fab";
 import { LiaChatFab } from "@/components/lia/lia-chat-fab";
+import { LiaWriterModal } from "@/components/lia/lia-writer-modal";
 import { cn } from "@/lib/utils";
 
 /**
@@ -15,6 +17,10 @@ import { cn } from "@/lib/utils";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [liaOpen, setLiaOpen] = useState(false);
+  const [writerOpen, setWriterOpen] = useState(false);
+  // Escritor da Lia é wedding-scoped: só faz sentido dentro de /weddings/[id].
+  const pathname = usePathname();
+  const weddingId = pathname.match(/^\/weddings\/([^/]+)/)?.[1];
 
   return (
     <div className="min-h-screen">
@@ -22,6 +28,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed((v) => !v)}
         onOpenLia={() => setLiaOpen(true)}
+        onOpenWriter={weddingId ? () => setWriterOpen(true) : undefined}
       />
       <div
         className={cn(
@@ -34,6 +41,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
       <HelpFab />
       <LiaChatFab open={liaOpen} onOpenChange={setLiaOpen} />
+      {weddingId && (
+        <LiaWriterModal weddingId={weddingId} open={writerOpen} onOpenChange={setWriterOpen} />
+      )}
     </div>
   );
 }

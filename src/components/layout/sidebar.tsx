@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useState } from "react";
 import {
-  LayoutDashboard, Wallet, Users, Armchair, BarChart3, Settings, LogOut, Menu, X, Heart, Gift, ListChecks, Lock, Sparkles, LineChart, ChevronLeft, ChevronRight, ShieldCheck,
+  LayoutDashboard, Wallet, Users, Armchair, BarChart3, Settings, LogOut, Menu, X, Heart, Gift, ListChecks, Lock, Sparkles, LineChart, ChevronLeft, ChevronRight, ShieldCheck, PenLine,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useActivePlan } from "@/lib/use-plan";
@@ -31,9 +31,11 @@ interface SidebarProps {
   onToggleCollapse?: () => void;
   /** Abre o chat global da Lia (estado mora no AppShell). */
   onOpenLia?: () => void;
+  /** Abre o Escritor da Lia. Só definido dentro de um casamento (wedding-scoped). */
+  onOpenWriter?: () => void;
 }
 
-export function Sidebar({ collapsed = false, onToggleCollapse, onOpenLia }: SidebarProps) {
+export function Sidebar({ collapsed = false, onToggleCollapse, onOpenLia, onOpenWriter }: SidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
@@ -108,6 +110,7 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onOpenLia }: Side
         <nav className="flex-1 p-3 space-y-6 overflow-y-auto">
           <Section title="Geral" items={globalNav} pathname={pathname} locked={locked} isManager={isManager} collapsed={collapsed}>
             <LiaTeaser plan={plan} collapsed={collapsed} onClick={() => onOpenLia?.()} />
+            {onOpenWriter && <WriterEntry collapsed={collapsed} onClick={onOpenWriter} />}
             {isAdmin && <AdminLink pathname={pathname} collapsed={collapsed} />}
           </Section>
           {weddingNav.length > 0 && <Section title="Casamento" items={weddingNav} pathname={pathname} locked={locked} isManager={isManager} collapsed={collapsed} />}
@@ -180,6 +183,28 @@ function LiaTeaser({ plan, collapsed, onClick }: { plan: string | undefined; col
             </span>
           </>
         )}
+      </button>
+    </li>
+  );
+}
+
+/** Atalho para o Escritor da Lia (modal de redação por streaming). */
+function WriterEntry({ collapsed, onClick }: { collapsed: boolean; onClick: () => void }) {
+  const label = "Escritor da Lia";
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={label}
+        title={collapsed ? label : undefined}
+        className={cn(
+          "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-600 hover:bg-slate-50",
+          collapsed && "justify-center px-2",
+        )}
+      >
+        <PenLine className="h-4 w-4 shrink-0 text-gold-500" />
+        {!collapsed && <span className="flex-1 text-left">{label}</span>}
       </button>
     </li>
   );
