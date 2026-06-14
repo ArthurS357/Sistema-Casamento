@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Plus, Trash2, Edit, Gift as GiftIcon, Check, ExternalLink, Copy, KeyRound, ImagePlus, X,
+  Plus, Trash2, Edit, Gift as GiftIcon, Check, ExternalLink, Copy, KeyRound, ImagePlus, X, Sparkles, Loader2,
 } from "lucide-react";
 import { CldUploadWidget } from "next-cloudinary";
 import { apiFetch } from "@/lib/api";
@@ -11,7 +11,7 @@ import { Input, Textarea, Label } from "@/components/ui/input";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { formatBRL } from "@/lib/money";
 import { useActivePlan } from "@/lib/use-plan";
@@ -130,6 +130,7 @@ export default function GiftsAdminClient({
           <a href={`/gift/${id}`} target="_blank" rel="noreferrer">
             <Button variant="outline"><ExternalLink className="h-4 w-4" /> Ver página</Button>
           </a>
+          <GenerateGiftsButton id={id} />
           <Button variant="gold" onClick={() => { setEditing(null); setOpen(true); }}>
             <Plus className="h-4 w-4" /> Novo presente
           </Button>
@@ -210,6 +211,82 @@ export default function GiftsAdminClient({
 
       <GiftDialog key={editing?.id ?? "new"} open={open} onOpenChange={setOpen} editing={editing} onSave={(b) => save.mutate(b)} pending={save.isPending} />
     </div>
+  );
+}
+
+/**
+ * "Gerar Cotas com Lia": pede o destino da lua de mel e manda a Lia criar ~15
+ * cotas temáticas (POST /ai/generate-gifts). Ao concluir, invalida a lista de
+ * presentes para a tela repintar com as novas cotas.
+ */
+function GenerateGiftsButton({ id }: { id: string }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [theme, setTheme] = useState("");
+
+  const generate = useMutation<{ created: number }>({
+    mutationFn: () =>
+      apiFetch(`/api/weddings/${id}/ai/generate-gifts`, {
+        method: "POST",
+        body: JSON.stringify({ theme: theme.trim() }),
+      }),
+    onSuccess: ({ created }) => {
+      qc.invalidateQueries({ queryKey: ["gifts", id] });
+      setOpen(false);
+      setTheme("");
+      if (created > 0) toast.success(`A Lia criou ${created} cota${created > 1 ? "s" : ""} de presente.`);
+      else toast.info("A Lia não conseguiu gerar as cotas. Tente outro destino.");
+    },
+    onError: (e: Error) => toast.error(e.message || "A Lia não conseguiu gerar as cotas."),
+  });
+  const pending = generate.isPending;
+  const canSubmit = theme.trim().length >= 2 && !pending;
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="Gerar cotas com a Lia"
+        className="group relative inline-flex items-center gap-2 overflow-hidden rounded-md bg-gradient-to-r from-gold-500 via-amber-500 to-gold-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:shadow-md hover:brightness-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2"
+      >
+        <Sparkles className="h-4 w-4 transition-transform group-hover:rotate-12 group-hover:scale-110" />
+        ✨ Gerar Cotas com Lia
+      </button>
+
+      <Dialog open={open} onOpenChange={(o) => !pending && setOpen(o)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-gold-500" /> Gerar cotas com a Lia
+            </DialogTitle>
+            <DialogDescription>
+              Diga o destino da lua de mel e a Lia cria cerca de 15 cotas de presente temáticas (passeios, jantares, experiências) com valores sugeridos.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            className="space-y-4"
+            onSubmit={(e) => { e.preventDefault(); if (canSubmit) generate.mutate(); }}
+          >
+            <div>
+              <Label htmlFor="lia-theme">Destino da lua de mel</Label>
+              <Input
+                id="lia-theme"
+                value={theme}
+                onChange={(e) => setTheme(e.target.value)}
+                placeholder="Ex.: Paris, Maldivas, Maragogi…"
+                maxLength={100}
+                required
+                autoFocus
+              />
+            </div>
+            <Button type="submit" variant="gold" className="w-full" disabled={!canSubmit}>
+              {pending ? <><Loader2 className="h-4 w-4 animate-spin" /> A Lia está criando…</> : "Gerar cotas"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
