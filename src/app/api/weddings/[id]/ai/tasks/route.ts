@@ -1,7 +1,7 @@
-import { google } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { subMonths } from "date-fns";
+import { liaModel, LIA_GUARDRAILS } from "@/lib/ai/lia-model";
 import { prisma } from "@/lib/db";
 import {
   requireUserId,
@@ -45,7 +45,7 @@ const SYSTEM_PROMPT =
   "tarefas essenciais de planejamento, distribuídas ao longo dos meses que " +
   "antecedem o casamento (do maior prazo ao menor). Seja prática e cubra as " +
   "etapas clássicas: definição de data e local, fornecedores, convites, " +
-  "provas, documentação e detalhes finais. Português do Brasil.";
+  "provas, documentação e detalhes finais. Português do Brasil." + LIA_GUARDRAILS;
 
 export async function POST(_req: Request, { params }: Params) {
   try {
@@ -64,13 +64,16 @@ export async function POST(_req: Request, { params }: Params) {
     if (!wedding) throw new AuthError(404, "Wedding not found");
 
     const { object } = await generateObject({
-      model: google("gemini-1.5-flash"),
+      model: liaModel,
       schema: TasksSchema,
       system: SYSTEM_PROMPT,
       prompt: JSON.stringify({
         weddingTitle: wedding.title,
         weddingDate: wedding.date.toISOString(),
       }),
+      temperature: 0.2,
+      topP: 0.8,
+      maxOutputTokens: 1500,
     });
 
     const data = object.tasks.map((t) => ({

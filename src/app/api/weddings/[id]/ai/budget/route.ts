@@ -1,6 +1,6 @@
-import { google } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import { z } from "zod";
+import { liaModel, LIA_GUARDRAILS } from "@/lib/ai/lia-model";
 import { prisma } from "@/lib/db";
 import { ExpenseCategory } from "@/lib/validation/enums";
 import {
@@ -42,7 +42,7 @@ const SYSTEM_PROMPT =
   "Você é a Lia, assessora de casamentos. Distribua o orçamento total de um " +
   "casamento entre as categorias de despesa fornecidas, em porcentagens que " +
   "somem aproximadamente 100. Use proporções realistas do mercado brasileiro " +
-  "(buffet/local costumam dominar). Não invente categorias fora da lista.";
+  "(buffet/local costumam dominar). Não invente categorias fora da lista." + LIA_GUARDRAILS;
 
 export async function POST(req: Request, { params }: Params) {
   try {
@@ -57,13 +57,16 @@ export async function POST(req: Request, { params }: Params) {
     const { total } = BodySchema.parse(await req.json());
 
     const { object } = await generateObject({
-      model: google("gemini-1.5-flash"),
+      model: liaModel,
       schema: BudgetSchema,
       system: SYSTEM_PROMPT,
       prompt: JSON.stringify({
         totalBRL: total / 100,
         categories: ExpenseCategory.options,
       }),
+      temperature: 0.1,
+      topP: 0.8,
+      maxOutputTokens: 1000,
     });
 
     // Uma despesa por categoria; amount em centavos derivado do percentual.

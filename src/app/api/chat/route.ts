@@ -1,5 +1,5 @@
-import { google } from "@ai-sdk/google";
 import { streamText, convertToModelMessages, type UIMessage } from "ai";
+import { liaModel, LIA_GUARDRAILS } from "@/lib/ai/lia-model";
 import {
   requireUserId,
   requirePremiumWorkspace,
@@ -19,7 +19,7 @@ const SYSTEM_PROMPT =
   "orçamento, fornecedores, etiqueta, convidados e decoração. Quando fizer " +
   "sentido, devolva listas objetivas. Não invente preços exatos nem prometa " +
   "serviços; oriente com faixas e boas práticas. Se a pergunta fugir de " +
-  "casamentos, redirecione com simpatia.";
+  "casamentos, redirecione com simpatia." + LIA_GUARDRAILS;
 
 export async function POST(req: Request) {
   try {
@@ -32,9 +32,12 @@ export async function POST(req: Request) {
     const { messages }: { messages: UIMessage[] } = await req.json();
 
     const result = streamText({
-      model: google("gemini-1.5-flash"),
+      model: liaModel,
       system: SYSTEM_PROMPT,
       messages: await convertToModelMessages(messages),
+      temperature: 0.7,
+      topP: 0.9,
+      maxOutputTokens: 1000,
     });
 
     return result.toUIMessageStreamResponse();

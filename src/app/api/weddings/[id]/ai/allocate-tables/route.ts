@@ -1,6 +1,6 @@
-import { google } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import { z } from "zod";
+import { liaModel, LIA_GUARDRAILS } from "@/lib/ai/lia-model";
 import { prisma } from "@/lib/db";
 import {
   requireUserId,
@@ -32,7 +32,7 @@ const SYSTEM_PROMPT =
   "mesas disponíveis respeitando o limite de assentos de cada mesa. Tente " +
   "manter grupos familiares (relações do tipo family, couple, friend) juntos " +
   "na mesma mesa e separe convidados com relação do tipo conflict. Responda " +
-  "somente com pares guestId→tableId; não invente ids que não estejam na lista.";
+  "somente com pares guestId→tableId; não invente ids que não estejam na lista." + LIA_GUARDRAILS;
 
 export async function POST(_req: Request, { params }: Params) {
   try {
@@ -92,10 +92,13 @@ export async function POST(_req: Request, { params }: Params) {
     });
 
     const { object } = await generateObject({
-      model: google("gemini-1.5-flash"),
+      model: liaModel,
       schema: AllocationSchema,
       system: SYSTEM_PROMPT,
       prompt: JSON.stringify({ guests, tables: tablesForAI, relationships }),
+      temperature: 0.1,
+      topP: 0.8,
+      maxOutputTokens: 1500,
     });
 
     // Aplicação server-side: valida cada par contra nossos mapas e respeita
