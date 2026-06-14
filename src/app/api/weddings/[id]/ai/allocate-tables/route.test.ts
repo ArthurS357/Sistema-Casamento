@@ -12,7 +12,9 @@ vi.mock('@/lib/db', () => ({
     guest: { findMany: vi.fn(), update: vi.fn() },
     table: { findMany: vi.fn() },
     guestRelationship: { findMany: vi.fn() },
-    $transaction: vi.fn(),
+    // A rota persiste as alocações em um único UPDATE em lote (fix N+1),
+    // não mais via $transaction de N updates.
+    $executeRawUnsafe: vi.fn(),
   },
 }));
 
@@ -140,9 +142,9 @@ describe('Allocate Tables AI Route', () => {
     
     // Verifica se a chamada do AI SDK foi feita
     expect(ai.generateObject).toHaveBeenCalled();
-    
-    // Verifica se salvou as transações no banco
-    expect(prisma.$transaction).toHaveBeenCalled();
+
+    // Verifica se persistiu as alocações no banco (UPDATE em lote)
+    expect(prisma.$executeRawUnsafe).toHaveBeenCalled();
   });
 
   it('deve respeitar o fallback determinístico sentando convidados restantes', async () => {
@@ -181,10 +183,11 @@ describe('Allocate Tables AI Route', () => {
     await POST(req, { params: Promise.resolve({ id: mockWeddingId }) });
 
     // Assert
-    // O fallback irá verificar que há 1 assento livre e alocará guest-2 nele
-    expect(prisma.$transaction).toHaveBeenCalledWith([
-      prisma.guest.update({ where: { id: 'guest-1' }, data: { seatId: 'seat-1' } }),
-      prisma.guest.update({ where: { id: 'guest-2' }, data: { seatId: 'seat-2' } }),
-    ]);
+    // guest-1 alocado pela IA (seat-1) e guest-2 pelo fallback determinístico
+    // (seat-2). Ambos vão em um único UPDATE em lote.
+    expect(prisma.$executeRawUnsafe).toHaveBeenCalledTimes(1);
+    const sql = String(vi.mocked(prisma.$executeRawUnsafe).mock.calls[0]?.[0] ?? "");
+    expect(sql).toContain("('guest-1', 'seat-1')");
+    expect(sql).toContain("('guest-2', 'seat-2')");
   });
 });
