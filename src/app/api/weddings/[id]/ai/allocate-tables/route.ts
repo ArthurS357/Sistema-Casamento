@@ -131,11 +131,13 @@ export async function POST(_req: Request, { params }: Params) {
     }
 
     if (updates.length > 0) {
-      await prisma.$transaction(
-        updates.map((u) =>
-          prisma.guest.update({ where: { id: u.guestId }, data: { seatId: u.seatId } }),
-        ),
-      );
+      const values = updates.map((u) => `('${u.guestId}', '${u.seatId}')`).join(", ");
+      await prisma.$executeRawUnsafe(`
+        UPDATE "Guest"
+        SET "seatId" = v.seat_id
+        FROM (VALUES ${values}) AS v(guest_id, seat_id)
+        WHERE "id" = v.guest_id;
+      `);
     }
 
     return Response.json({ allocated: updates.length });
