@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   DndContext, useDraggable, useDroppable, type DragEndEvent, PointerSensor, useSensor, useSensors,
 } from "@dnd-kit/core";
-import { Plus, AlertTriangle, Heart, Trash2 } from "lucide-react";
+import { Plus, AlertTriangle, Heart, Trash2, Sparkles, Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -100,9 +100,12 @@ export default function TablesPage({ params }: { params: Promise<{ id: string }>
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-3xl text-slate-900">Mesas</h1>
-        <NewTableButton weddingId={id} />
+        <div className="flex items-center gap-2">
+          <LiaAllocateButton weddingId={id} />
+          <NewTableButton weddingId={id} />
+        </div>
       </header>
 
       <DndContext sensors={sensors} onDragEnd={onDragEnd}>
@@ -204,6 +207,58 @@ function Droppable({ id, children }: { id: string; children: React.ReactNode }) 
     <div ref={setNodeRef} className={cn(isOver && "ring-2 ring-gold-400 rounded")}>
       {children}
     </div>
+  );
+}
+
+/**
+ * Aciona a Lia (copiloto IA) para alocar convidados confirmados sem mesa.
+ * Estado de "pensando" enquanto o POST roda; ao concluir invalida as
+ * queries de mesas e convidados para a UI refletir os novos assentos.
+ */
+function LiaAllocateButton({ weddingId }: { weddingId: string }) {
+  const qc = useQueryClient();
+
+  const allocate = useMutation<{ allocated: number }>({
+    mutationFn: () =>
+      apiFetch(`/api/weddings/${weddingId}/ai/allocate-tables`, { method: "POST" }),
+    onSuccess: ({ allocated }) => {
+      qc.invalidateQueries({ queryKey: ["tables", weddingId] });
+      qc.invalidateQueries({ queryKey: ["guests", weddingId] });
+      if (allocated > 0) {
+        toast.success(`A Lia organizou ${allocated} convidado${allocated > 1 ? "s" : ""} nas mesas.`);
+      } else {
+        toast.info("Nada para organizar: ninguém confirmado sem mesa ou sem assentos livres.");
+      }
+    },
+    onError: (e: Error) => toast.error(e.message || "A Lia não conseguiu organizar as mesas."),
+  });
+
+  const pending = allocate.isPending;
+
+  return (
+    <button
+      type="button"
+      onClick={() => allocate.mutate()}
+      disabled={pending}
+      aria-label="Organizar mesas com IA (Lia)"
+      className={cn(
+        "group relative inline-flex items-center gap-2 overflow-hidden rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm transition-all",
+        "bg-gradient-to-r from-gold-500 via-amber-500 to-gold-600",
+        "hover:shadow-md hover:brightness-105 active:scale-[0.98]",
+        "disabled:cursor-not-allowed disabled:opacity-80",
+      )}
+    >
+      {/* brilho que percorre o botão enquanto a Lia "pensa" */}
+      {pending && (
+        <span className="pointer-events-none absolute inset-0 animate-shimmer bg-[linear-gradient(110deg,transparent_35%,rgba(255,255,255,0.35)_50%,transparent_65%)] bg-[length:200%_100%]" />
+      )}
+      {pending ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <Sparkles className="h-4 w-4 transition-transform group-hover:rotate-12 group-hover:scale-110" />
+      )}
+      {pending ? "A Lia está pensando…" : "Organizar mesas com IA (Lia)"}
+    </button>
   );
 }
 
