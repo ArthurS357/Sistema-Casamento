@@ -1,7 +1,7 @@
 "use client";
-import { use, useState } from "react";
+import { use, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, Sparkles, Loader2 } from "lucide-react";
+import { Plus, Trash2, Sparkles, Loader2, Camera } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input, Select, Label } from "@/components/ui/input";
@@ -79,6 +79,8 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
   const [category, setCategory] = useState<string>("venue");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState<number | undefined>(undefined);
+  // Vencimento extraído de um comprovante escaneado pela Lia (some no submit).
+  const [scannedDueDate, setScannedDueDate] = useState<string | null>(null);
 
   function addExpense(e: React.FormEvent) {
     e.preventDefault();
@@ -87,8 +89,17 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
       description: description || undefined,
       amount: amount || 0,
       paid: 0,
+      ...(scannedDueDate ? { dueDate: scannedDueDate } : {}),
     });
-    setDescription(""); setAmount(undefined);
+    setDescription(""); setAmount(undefined); setScannedDueDate(null);
+  }
+
+  // Preenche o formulário com os dados lidos de um comprovante pela Lia.
+  function applyScannedReceipt(r: ScannedReceipt) {
+    if (r.category) setCategory(r.category);
+    if (r.description) setDescription(r.description);
+    if (typeof r.amountCents === "number") setAmount(r.amountCents);
+    setScannedDueDate(r.dueDate ?? null);
   }
 
   return (
@@ -118,6 +129,15 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
       </div>
 
       <Card><CardContent>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm text-slate-500">Adicione uma despesa ou deixe a Lia ler um comprovante para você.</p>
+          <ReceiptScanButton weddingId={id} onScanned={applyScannedReceipt} />
+        </div>
+        {scannedDueDate && (
+          <p className="mb-2 text-xs text-gold-600">
+            ✨ Vencimento lido do comprovante: {new Date(scannedDueDate).toLocaleDateString("pt-BR")}
+          </p>
+        )}
         <form className="grid gap-3 md:grid-cols-[1fr_2fr_1fr_auto]" onSubmit={addExpense}>
           <div>
             <Label htmlFor="cat">Categoria</Label>
@@ -162,6 +182,100 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
         </table>
       </CardContent></Card>
     </div>
+  );
+}
+
+interface ScannedReceipt {
+  amountCents: number;
+  description: string | null;
+  category: string | null;
+  dueDate: string | null;
+}
+
+/** Lê um arquivo de imagem como data URL (base64) para enviar à Rota de visão. */
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("Falha ao ler o arquivo."));
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Botão "Ler Comprovante": abre o seletor de arquivos, converte a imagem em
+ * base64 e chama a Lia (POST /ai/scan-receipt). O resultado preenche os campos
+ * do formulário de despesa via `onScanned`. Limite de 6MB no client (o servidor
+ * também limita) para evitar uploads inviáveis.
+ */
+function ReceiptScanButton({
+  weddingId,
+  onScanned,
+}: {
+  weddingId: string;
+  onScanned: (r: ScannedReceipt) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [scanning, setScanning] = useState(false);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // permite reescolher o mesmo arquivo
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione uma imagem (JPG, PNG ou WEBP).");
+      return;
+    }
+    if (file.size > 6 * 1024 * 1024) {
+      toast.error("Imagem muito grande. Use um arquivo de até 6MB.");
+      return;
+    }
+    setScanning(true);
+    try {
+      const image = await fileToDataUrl(file);
+      const r = await apiFetch<ScannedReceipt>(`/api/weddings/${weddingId}/ai/scan-receipt`, {
+        method: "POST",
+        body: JSON.stringify({ image }),
+      });
+      onScanned(r);
+      toast.success("Comprovante lido! Confira os campos antes de salvar.");
+    } catch (err) {
+      toast.error((err as Error).message || "A Lia não conseguiu ler o comprovante.");
+    } finally {
+      setScanning(false);
+    }
+  }
+
+  return (
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="sr-only"
+        onChange={handleFile}
+        aria-hidden="true"
+        tabIndex={-1}
+      />
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={scanning}
+        aria-label="Ler comprovante com a Lia"
+        className={cn(
+          "group inline-flex items-center gap-2 rounded-md border border-gold-200 bg-gold-50 px-3 py-2 text-sm font-medium text-gold-700 transition-all",
+          "hover:bg-gold-100 hover:shadow-sm active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2",
+        )}
+      >
+        {scanning ? (
+          <><Loader2 className="h-4 w-4 animate-spin" /> A Lia está lendo…</>
+        ) : (
+          <><Camera className="h-4 w-4 transition-transform group-hover:scale-110" /> ✨ Ler Comprovante</>
+        )}
+      </button>
+    </>
   );
 }
 
