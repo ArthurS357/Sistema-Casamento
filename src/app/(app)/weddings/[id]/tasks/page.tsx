@@ -1,7 +1,7 @@
 "use client";
 import { use, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, Edit, ListChecks, CalendarClock, Tag } from "lucide-react";
+import { Plus, Trash2, Edit, ListChecks, CalendarClock, Tag, Sparkles, Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea, Select, Label } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { cn } from "@/lib/utils";
 import { TaskStatus } from "@/lib/validation/enums";
 import { TASK_STATUS_ORDER, TASK_STATUS_META, dueStatus, type DueStatus } from "@/lib/tasks";
+import { toast } from "sonner";
 
 interface Task {
   id: string;
@@ -147,9 +148,12 @@ export default function TasksPage({ params }: { params: Promise<{ id: string }> 
             </div>
             <h3 className="font-medium text-slate-900">Nenhuma tarefa ainda</h3>
             <p className="text-sm text-slate-500 mt-1">Crie pendências como &ldquo;Fechar buffet&rdquo; ou &ldquo;Provar bolo&rdquo;.</p>
-            <Button variant="outline" className="mt-4" onClick={() => { setEditing(null); setOpen(true); }}>
-              Adicionar primeira tarefa
-            </Button>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+              <GenerateScheduleButton weddingId={id} />
+              <Button variant="outline" onClick={() => { setEditing(null); setOpen(true); }}>
+                Adicionar manualmente
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -254,6 +258,47 @@ export default function TasksPage({ params }: { params: Promise<{ id: string }> 
         pending={save.isPending}
       />
     </div>
+  );
+}
+
+/**
+ * Pede à Lia um cronograma inicial (POST /ai/tasks). Só aparece com a lista
+ * vazia; ao concluir invalida a query para os cards surgirem.
+ */
+function GenerateScheduleButton({ weddingId }: { weddingId: string }) {
+  const qc = useQueryClient();
+  const generate = useMutation<{ created: number }>({
+    mutationFn: () => apiFetch(`/api/weddings/${weddingId}/ai/tasks`, { method: "POST" }),
+    onSuccess: ({ created }) => {
+      qc.invalidateQueries({ queryKey: ["tasks", weddingId] });
+      qc.invalidateQueries({ queryKey: ["wedding", weddingId] });
+      if (created > 0) toast.success(`A Lia criou ${created} tarefa${created > 1 ? "s" : ""} no seu cronograma.`);
+      else toast.info("A Lia não gerou tarefas desta vez. Tente novamente.");
+    },
+    onError: (e: Error) => toast.error(e.message || "A Lia não conseguiu gerar o cronograma."),
+  });
+  const pending = generate.isPending;
+
+  return (
+    <button
+      type="button"
+      onClick={() => generate.mutate()}
+      disabled={pending}
+      aria-label="Gerar cronograma com Lia"
+      className={cn(
+        "group relative inline-flex items-center gap-2 overflow-hidden rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm transition-all",
+        "bg-gradient-to-r from-gold-500 via-amber-500 to-gold-600",
+        "hover:shadow-md hover:brightness-105 active:scale-[0.98]",
+        "disabled:cursor-not-allowed disabled:opacity-80",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2",
+      )}
+    >
+      {pending && (
+        <span className="pointer-events-none absolute inset-0 animate-shimmer bg-[linear-gradient(110deg,transparent_35%,rgba(255,255,255,0.35)_50%,transparent_65%)] bg-[length:200%_100%]" />
+      )}
+      {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 transition-transform group-hover:rotate-12 group-hover:scale-110" />}
+      {pending ? "A Lia está pensando…" : "✨ Gerar Cronograma com Lia"}
+    </button>
   );
 }
 

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { AnnouncementBanner } from "@/components/layout/announcement-banner";
 import { HelpFab } from "@/components/layout/help-fab";
+import { LiaChatFab } from "@/components/lia/lia-chat-fab";
 import { cn } from "@/lib/utils";
 
 /**
@@ -13,10 +14,15 @@ import { cn } from "@/lib/utils";
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [liaOpen, setLiaOpen] = useState(false);
 
   return (
     <div className="min-h-screen">
-      <Sidebar collapsed={collapsed} onToggleCollapse={() => setCollapsed((v) => !v)} />
+      <Sidebar
+        collapsed={collapsed}
+        onToggleCollapse={() => setCollapsed((v) => !v)}
+        onOpenLia={() => setLiaOpen(true)}
+      />
       <div
         className={cn(
           "transition-[margin] duration-300 ease-in-out",
@@ -27,6 +33,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <main className="p-4 lg:p-8">{children}</main>
       </div>
       <HelpFab />
+      <LiaChatFab open={liaOpen} onOpenChange={setLiaOpen} />
     </div>
   );
 }

@@ -75,6 +75,37 @@ export async function requireManagerAnalyticsFeature(weddingId: string): Promise
 }
 
 /**
+ * Consentimento LGPD para IA (Lia). O usuário pode revogar em
+ * Configurações → Privacidade; sem ele, nenhuma rota de IA processa
+ * dados do evento. 403 quando revogado.
+ */
+export async function requireAiConsent(userId: string): Promise<void> {
+  const u = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { aiConsent: true },
+  });
+  if (!u?.aiConsent) {
+    throw new AuthError(403, "Consentimento de IA desativado. Ative em Configurações → Privacidade.");
+  }
+}
+
+/**
+ * Paywall da Lia para rotas globais (sem wedding): exige que o workspace
+ * ativo do usuário seja Pro/Gestor. Espelha requirePremiumWeddingFeature
+ * para o chat, que não tem um weddingId no path.
+ */
+export async function requirePremiumWorkspace(userId: string): Promise<void> {
+  const wsId = await getActiveWorkspaceId(userId);
+  const ws = await prisma.workspace.findUnique({
+    where: { id: wsId },
+    select: { plan: true },
+  });
+  if (!ws || !canAccessPremiumFeatures(ws.plan)) {
+    throw new AuthError(403, "Recurso disponível apenas nos planos Pro e Gestor.");
+  }
+}
+
+/**
  * Resolve o workspace ativo do usuário (o mais antigo = o pessoal,
  * criado no registro). Ponto único para futura troca de tenant ativo.
  */

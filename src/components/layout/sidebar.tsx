@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useActivePlan } from "@/lib/use-plan";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 interface NavItem {
   href: string;
@@ -30,13 +29,14 @@ interface SidebarProps {
   collapsed?: boolean;
   /** Alterna o estado de colapso (controlado pelo AppShell). */
   onToggleCollapse?: () => void;
+  /** Abre o chat global da Lia (estado mora no AppShell). */
+  onOpenLia?: () => void;
 }
 
-export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps) {
+export function Sidebar({ collapsed = false, onToggleCollapse, onOpenLia }: SidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
-  const [liaOpen, setLiaOpen] = useState(false);
   const { isPremium, plan } = useActivePlan();
   const weddingMatch = pathname.match(/^\/weddings\/([^/]+)/);
   const weddingId = weddingMatch?.[1];
@@ -107,7 +107,7 @@ export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps) {
         </div>
         <nav className="flex-1 p-3 space-y-6 overflow-y-auto">
           <Section title="Geral" items={globalNav} pathname={pathname} locked={locked} isManager={isManager} collapsed={collapsed}>
-            <LiaTeaser plan={plan} collapsed={collapsed} onClick={() => setLiaOpen(true)} />
+            <LiaTeaser plan={plan} collapsed={collapsed} onClick={() => onOpenLia?.()} />
             {isAdmin && <AdminLink pathname={pathname} collapsed={collapsed} />}
           </Section>
           {weddingNav.length > 0 && <Section title="Casamento" items={weddingNav} pathname={pathname} locked={locked} isManager={isManager} collapsed={collapsed} />}
@@ -128,31 +128,13 @@ export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps) {
           </button>
         </div>
       </aside>
-
-      <Dialog open={liaOpen} onOpenChange={setLiaOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-gold-500" /> Lia — sua assistente de IA
-            </DialogTitle>
-            <DialogDescription>
-              Em breve a Lia vai te ajudar a planejar cada detalhe do casamento: sugerir
-              tarefas, organizar o orçamento e responder dúvidas em segundos. Estamos
-              caprichando nos últimos retoques. ✨
-            </DialogDescription>
-          </DialogHeader>
-          <p className="text-sm text-slate-500">
-            Fique de olho — avisaremos assim que ela estiver disponível.
-          </p>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
 
 /**
  * Nível de acesso à Lia por plano (teaser):
- * Gestor → ilimitado, Pro → básico, Free → "Em breve".
+ * Gestor → ilimitado, Pro → básico, Free → bloqueado (upgrade).
  */
 function liaTier(plan: string | undefined): { label: string; badge: string; badgeClass: string } {
   if (plan === "gestor") {
@@ -169,7 +151,7 @@ function liaTier(plan: string | undefined): { label: string; badge: string; badg
       badgeClass: "bg-gold-100 text-gold-700",
     };
   }
-  return { label: "Lia (IA) ✨", badge: "Em breve", badgeClass: "bg-gold-100 text-gold-700" };
+  return { label: "Lia (IA) ✨", badge: "Pro", badgeClass: "bg-gold-100 text-gold-700" };
 }
 
 function LiaTeaser({ plan, collapsed, onClick }: { plan: string | undefined; collapsed: boolean; onClick: () => void }) {

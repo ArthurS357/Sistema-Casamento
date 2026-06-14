@@ -1,12 +1,13 @@
 "use client";
 import { use, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Sparkles, Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input, Select, Label } from "@/components/ui/input";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { formatBRL } from "@/lib/money";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ExpenseCategory } from "@/lib/validation/enums";
@@ -92,7 +93,10 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      <h1 className="font-display text-3xl text-slate-900">Orçamento</h1>
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="font-display text-3xl text-slate-900">Orçamento</h1>
+        <BudgetWithLiaButton weddingId={id} />
+      </header>
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card className={cn(premiumCard)}><CardContent>
@@ -158,6 +162,84 @@ export default function BudgetPage({ params }: { params: Promise<{ id: string }>
         </table>
       </CardContent></Card>
     </div>
+  );
+}
+
+/**
+ * Pede o orçamento total ao usuário e manda a Lia distribuir entre as
+ * categorias (POST /ai/budget). O valor vai em centavos (convenção do
+ * projeto); ao concluir invalida despesas e wedding para refletir na UI.
+ */
+function BudgetWithLiaButton({ weddingId }: { weddingId: string }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [total, setTotal] = useState<number | undefined>(undefined);
+
+  const generate = useMutation<{ created: number }>({
+    mutationFn: () =>
+      apiFetch(`/api/weddings/${weddingId}/ai/budget`, {
+        method: "POST",
+        body: JSON.stringify({ total }),
+      }),
+    onSuccess: ({ created }) => {
+      qc.invalidateQueries({ queryKey: ["expenses", weddingId] });
+      qc.invalidateQueries({ queryKey: ["wedding", weddingId] });
+      setOpen(false);
+      setTotal(undefined);
+      if (created > 0) toast.success(`A Lia distribuiu seu orçamento em ${created} categoria${created > 1 ? "s" : ""}.`);
+      else toast.info("A Lia não conseguiu montar o orçamento. Tente novamente.");
+    },
+    onError: (e: Error) => toast.error(e.message || "A Lia não conseguiu orçar."),
+  });
+  const pending = generate.isPending;
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="Orçar com Lia"
+        className={cn(
+          "group relative inline-flex items-center gap-2 overflow-hidden rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm transition-all",
+          "bg-gradient-to-r from-gold-500 via-amber-500 to-gold-600",
+          "hover:shadow-md hover:brightness-105 active:scale-[0.98]",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2",
+        )}
+      >
+        <Sparkles className="h-4 w-4 transition-transform group-hover:rotate-12 group-hover:scale-110" />
+        ✨ Orçar com Lia
+      </button>
+
+      <Dialog open={open} onOpenChange={(o) => !pending && setOpen(o)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-gold-500" /> Orçar com a Lia
+            </DialogTitle>
+            <DialogDescription>
+              Informe o valor total disponível e a Lia distribui automaticamente entre as categorias (buffet, local, fotografia, etc.).
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            className="space-y-4"
+            onSubmit={(e) => { e.preventDefault(); if (total && total > 0) generate.mutate(); }}
+          >
+            <div>
+              <Label htmlFor="lia-total">Orçamento total</Label>
+              <CurrencyInput id="lia-total" value={total} onChange={setTotal} placeholder="R$ 50.000,00" required />
+            </div>
+            <Button
+              type="submit"
+              variant="gold"
+              className="w-full"
+              disabled={pending || !total || total <= 0}
+            >
+              {pending ? <><Loader2 className="h-4 w-4 animate-spin" /> A Lia está pensando…</> : "Distribuir orçamento"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
