@@ -6,7 +6,7 @@ import { ResetPasswordEmail } from "@/emails/ResetPasswordEmail";
 import { WorkspaceInviteEmail } from "@/emails/WorkspaceInviteEmail";
 
 /**
- * Cliente de e-mail transacional (Resend) do Atelier do Sim.
+ * Cliente de e-mail transacional (Resend) do Felice.
  *
  * Cada template vive em src/emails/ como componente React Email e é
  * convertido em HTML premium via render() antes do envio.
@@ -19,7 +19,7 @@ import { WorkspaceInviteEmail } from "@/emails/WorkspaceInviteEmail";
 const apiKey = process.env.RESEND_API_KEY;
 const resend = apiKey ? new Resend(apiKey) : null;
 
-const FROM = process.env.EMAIL_FROM ?? "Atelier do Sim <onboarding@resend.dev>";
+const FROM = process.env.EMAIL_FROM ?? "Felice <onboarding@resend.dev>";
 const APP_URL = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
 
 export type SendResult = { sent: boolean; id?: string; skipped?: boolean };
@@ -75,7 +75,7 @@ export async function sendWelcomeEmail(params: {
   return dispatch(
     "welcome email",
     params.to,
-    "Bem-vindos ao Atelier do Sim",
+    "Bem-vindos ao Felice",
     html,
   );
 }
@@ -97,7 +97,7 @@ export async function sendPasswordResetEmail(params: {
   return dispatch(
     "reset email",
     params.to,
-    "Redefinir sua senha — Atelier do Sim",
+    "Redefinir sua senha — Felice",
     html,
   );
 }
@@ -114,10 +114,10 @@ function esc(value: string): string {
 /** Casca HTML mínima compartilhada pelos lembretes do cron (texto simples estilizado). */
 function reminderShell(title: string, body: string): string {
   return `<div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#0f172a">
-  <p style="letter-spacing:.25em;text-transform:uppercase;font-size:11px;color:#b45309;margin:0 0 8px">Atelier do Sim</p>
+  <p style="letter-spacing:.25em;text-transform:uppercase;font-size:11px;color:#b45309;margin:0 0 8px">Felice</p>
   <h1 style="font-size:22px;margin:0 0 16px">${title}</h1>
   ${body}
-  <p style="font-size:12px;color:#64748b;margin-top:32px">Você recebeu este aviso automático do Atelier do Sim.</p>
+  <p style="font-size:12px;color:#64748b;margin-top:32px">Você recebeu este aviso automático do Felice.</p>
 </div>`;
 }
 
@@ -199,7 +199,7 @@ export async function sendWorkspaceInviteEmail(params: {
   return dispatch(
     "workspace invite email",
     params.to,
-    `${params.inviterName} convidou você — Atelier do Sim`,
+    `${params.inviterName} convidou você — Felice`,
     html,
   );
 }

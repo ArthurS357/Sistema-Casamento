@@ -86,7 +86,7 @@ export function HelpFab() {
             <DialogTitle className="flex items-center gap-2">
               <MessageCircleQuestion className="h-5 w-5 text-gold-500" /> Perguntas frequentes
             </DialogTitle>
-            <DialogDescription>O essencial sobre como o Atelier do Sim funciona.</DialogDescription>
+            <DialogDescription>O essencial sobre como o Felice funciona.</DialogDescription>
           </DialogHeader>
           <FaqAccordion />
         </DialogContent>

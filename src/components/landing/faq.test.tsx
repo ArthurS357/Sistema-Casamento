@@ -5,7 +5,7 @@ import { LandingFaq } from "./faq";
 describe("LandingFaq", () => {
   it("renders the base questions with the new brand name", () => {
     render(<LandingFaq />);
-    expect(screen.getByText("O que é o Atelier do Sim?")).toBeDefined();
+    expect(screen.getByText("O que é o Felice?")).toBeDefined();
     expect(screen.getByText("Posso testar de graça?")).toBeDefined();
     expect(screen.getByText("Como funciona a lista de presentes?")).toBeDefined();
     expect(screen.getByText("A IA Lia está em quais planos?")).toBeDefined();
@@ -23,13 +23,13 @@ describe("LandingFaq", () => {
 
   it("opens the first item by default", () => {
     render(<LandingFaq />);
-    const first = screen.getByRole("button", { name: /O que é o Atelier do Sim/ });
+    const first = screen.getByRole("button", { name: /O que é o Felice/ });
     expect(first.getAttribute("aria-expanded")).toBe("true");
   });
 
   it("expands a clicked question and collapses the previously open one", () => {
     render(<LandingFaq />);
-    const first = screen.getByRole("button", { name: /O que é o Atelier do Sim/ });
+    const first = screen.getByRole("button", { name: /O que é o Felice/ });
     const second = screen.getByRole("button", { name: /Posso testar de graça/ });
 
     fireEvent.click(second);
@@ -40,7 +40,7 @@ describe("LandingFaq", () => {
 
   it("toggles a question closed when clicked again", () => {
     render(<LandingFaq />);
-    const first = screen.getByRole("button", { name: /O que é o Atelier do Sim/ });
+    const first = screen.getByRole("button", { name: /O que é o Felice/ });
     fireEvent.click(first);
     expect(first.getAttribute("aria-expanded")).toBe("false");
   });

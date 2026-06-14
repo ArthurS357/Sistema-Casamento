@@ -118,9 +118,9 @@ describe('Allocate Tables AI Route', () => {
       }
     ];
 
-    vi.mocked(prisma.guest.findMany).mockResolvedValue(mockGuests as any);
-    vi.mocked(prisma.table.findMany).mockResolvedValue(mockTables as any);
-    vi.mocked(prisma.guestRelationship.findMany).mockResolvedValue([] as any);
+    vi.mocked(prisma.guest.findMany).mockResolvedValue(mockGuests as never);
+    vi.mocked(prisma.table.findMany).mockResolvedValue(mockTables as never);
+    vi.mocked(prisma.guestRelationship.findMany).mockResolvedValue([] as never);
 
     // 2. Mock AI SDK payload
     const expectedAllocations = {
@@ -128,7 +128,7 @@ describe('Allocate Tables AI Route', () => {
         { guestId: 'guest-1', tableId: 'table-1' },
       ]
     };
-    vi.mocked(ai.generateObject).mockResolvedValue({ object: expectedAllocations } as any);
+    vi.mocked(ai.generateObject).mockResolvedValue({ object: expectedAllocations } as never);
 
     // Act
     const response = await POST(req, { params: Promise.resolve({ id: mockWeddingId }) });
@@ -166,20 +166,20 @@ describe('Allocate Tables AI Route', () => {
       }
     ];
 
-    vi.mocked(prisma.guest.findMany).mockResolvedValue(mockGuests as any);
-    vi.mocked(prisma.table.findMany).mockResolvedValue(mockTables as any);
-    vi.mocked(prisma.guestRelationship.findMany).mockResolvedValue([] as any);
+    vi.mocked(prisma.guest.findMany).mockResolvedValue(mockGuests as never);
+    vi.mocked(prisma.table.findMany).mockResolvedValue(mockTables as never);
+    vi.mocked(prisma.guestRelationship.findMany).mockResolvedValue([] as never);
 
     // Mock IA: só aloca o guest-1. O guest-2 deve ser alocado pelo fallback determinístico.
     vi.mocked(ai.generateObject).mockResolvedValue({
       object: {
         allocations: [{ guestId: 'guest-1', tableId: 'table-1' }]
       }
-    } as any);
+    } as never);
 
     // Act
-    const response = await POST(req, { params: Promise.resolve({ id: mockWeddingId }) });
-    
+    await POST(req, { params: Promise.resolve({ id: mockWeddingId }) });
+
     // Assert
     // O fallback irá verificar que há 1 assento livre e alocará guest-2 nele
     expect(prisma.$transaction).toHaveBeenCalledWith([

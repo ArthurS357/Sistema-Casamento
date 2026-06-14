@@ -12,12 +12,12 @@ export type WelcomeEmailProps = {
 
 /**
  * E-mail de boas-vindas transacional. Estética editorial/luxo do
- * Atelier do Sim. Renderizado pelo Resend em src/lib/mail.ts.
+ * Felice. Renderizado pelo Resend em src/lib/mail.ts.
  */
 export function WelcomeEmail({ name, dashboardUrl, appUrl }: WelcomeEmailProps) {
   return (
     <BaseLayout
-      preview="Bem-vindos ao Atelier do Sim — sua jornada começa aqui"
+      preview="Bem-vindos ao Felice — sua jornada começa aqui"
       appUrl={appUrl ?? dashboardUrl}
     >
       <Heading className="text-ink mb-2 mt-8 text-center text-3xl font-normal leading-tight">

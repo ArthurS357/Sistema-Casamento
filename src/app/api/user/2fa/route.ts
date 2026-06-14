@@ -30,7 +30,7 @@ export async function POST() {
 
     const secret = generateSecret();
     const otpauthUrl = generateURI({
-      issuer: "Atelier",
+      issuer: "Felice",
       label: user.email,
       secret,
       algorithm: "sha1",

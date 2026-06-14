@@ -22,7 +22,7 @@ export function LandingFaq() {
             Ainda em dúvida?
           </h2>
           <p className="mt-4 text-lg text-slate-600">
-            O essencial sobre como o Atelier do Sim funciona, sem letras miúdas.
+            O essencial sobre como o Felice funciona, sem letras miúdas.
           </p>
         </div>
 

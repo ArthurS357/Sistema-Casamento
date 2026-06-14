@@ -4,7 +4,7 @@ import { LandingPricing } from "@/components/landing/pricing";
 import { LandingFooter } from "@/components/landing/footer";
 
 export const metadata: Metadata = {
-  title: "Planos e preços — Atelier do Sim",
+  title: "Planos e preços — Felice",
   description:
     "Free, Pro e Gestor: escolha o plano certo para testar, casar ou organizar vários casamentos. Cancele quando quiser.",
 };

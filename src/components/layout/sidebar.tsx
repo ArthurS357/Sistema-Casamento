@@ -88,10 +88,10 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onOpenLia }: Side
           <Link
             href="/dashboard"
             className="flex items-center gap-2 font-display text-xl"
-            aria-label="Atelier do Sim — Dashboard"
+            aria-label="Felice — Dashboard"
           >
-            <Image src="/android-chrome-192x192.png" alt="Atelier do Sim Logo" width={28} height={28} className="h-7 w-auto object-contain" priority />
-            {!collapsed && "Atelier do Sim"}
+            <Image src="/android-chrome-192x192.png" alt="Felice Logo" width={28} height={28} className="h-7 w-auto object-contain" priority />
+            {!collapsed && "Felice"}
           </Link>
           {onToggleCollapse && (
             <button

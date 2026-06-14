@@ -13,7 +13,7 @@ import {
 import type { ReactNode } from "react";
 
 /**
- * Paleta editorial/luxo do Atelier do Sim, compartilhada por todos os
+ * Paleta editorial/luxo do Felice, compartilhada por todos os
  * templates via <Tailwind>. Centralizada aqui para manter consistência
  * visual entre boas-vindas, recuperação de senha e convites.
  */
@@ -30,7 +30,7 @@ export const emailTheme = {
   },
 } as const;
 
-const BRAND = "Atelier do Sim";
+const BRAND = "Felice";
 const TAGLINE = "Planejamento de casamentos, do primeiro convidado ao último brinde.";
 
 export type BaseLayoutProps = {

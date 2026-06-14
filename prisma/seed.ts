@@ -122,11 +122,11 @@ async function main(): Promise<void> {
 
   const accounts: readonly SeedAccount[] = [
     {
-      name: "Admin Atelier",
+      name: "Admin Felice",
       email: adminEmail,
       password: adminPassword,
       systemRole: "admin",
-      workspaceName: "Atelier Admin",
+      workspaceName: "Felice Admin",
       workspaceSlug: "atelier-admin",
       // Admin nasce com plano Pro: acesso total ao produto sem precisar de upgrade.
       plan: "pro",
@@ -136,7 +136,7 @@ async function main(): Promise<void> {
       email: "teste@atelie.com.br",
       password: TEST_PASSWORD,
       systemRole: "user",
-      workspaceName: "Atelier Teste",
+      workspaceName: "Felice Teste",
       workspaceSlug: "atelier-teste",
     },
   ];

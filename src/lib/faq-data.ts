@@ -9,7 +9,7 @@ export interface QA {
  */
 export const faqs: QA[] = [
   {
-    question: "O que é o Atelier do Sim?",
+    question: "O que é o Felice?",
     answer:
       "É uma plataforma completa para organizar o casamento em um só lugar: lista de convidados, confirmação de presença (RSVP) por link, controle de orçamento, disposição das mesas, site dos noivos e lista de presentes que cai direto no seu PIX.",
   },

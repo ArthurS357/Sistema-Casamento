@@ -108,7 +108,7 @@ export async function POST(req: Request) {
     await sendWorkspaceInviteEmail({
       to: invitee.email,
       inviteeName: invitee.name ?? undefined,
-      inviterName: inviter?.name ?? "Um membro do Atelier do Sim",
+      inviterName: inviter?.name ?? "Um membro do Felice",
       workspaceName: ws.name,
     });
 

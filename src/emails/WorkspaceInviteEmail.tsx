@@ -39,7 +39,7 @@ export function WorkspaceInviteEmail({
       <Text className="text-muted m-0 text-center text-base leading-7">
         Olá{inviteeName ? `, ${inviteeName}` : ""}! <strong>{inviterName}</strong>{" "}
         convidou você para ajudar a planejar o casamento de{" "}
-        <strong>{workspaceName}</strong> no Atelier do Sim. Agora vocês cuidam de
+        <strong>{workspaceName}</strong> no Felice. Agora vocês cuidam de
         cada detalhe juntos — convidados, mesas e confirmações, lado a lado.
       </Text>
 

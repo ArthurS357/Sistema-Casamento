@@ -21,7 +21,7 @@ export function ResetPasswordEmail({
 }: ResetPasswordEmailProps) {
   return (
     <BaseLayout
-      preview="Redefina sua senha do Atelier do Sim"
+      preview="Redefina sua senha do Felice"
       appUrl={appUrl ?? resetUrl}
     >
       <Heading className="text-ink mb-2 mt-8 text-center text-3xl font-normal leading-tight">
